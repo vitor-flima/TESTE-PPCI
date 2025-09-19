@@ -25,17 +25,29 @@ except Exception as e:
 
 # --- FUNÇÃO AUXILIAR ---
 def get_all_projects():
-    """Lê todos os projetos da planilha e retorna como um DataFrame."""
+    """Lê todos os projetos da planilha pública e retorna como um DataFrame."""
     try:
-        df = conn.read(worksheet="Projetos", usecols=list(range(6)), ttl=5)
-        df.dropna(how="all", inplace=True)
+        # ID da sua planilha, extraído da URL que você me mandou
+        sheet_id = "1nlVhxQ-uugBcYl7Qi4PsBqG_T-wpgMAJa0avmgtPR5k"
+        sheet_name = "Projetos"
+        
+        # URL especial para baixar a aba da planilha como um arquivo CSV
+        url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
+        
+        # Lê o CSV diretamente para um DataFrame do Pandas
+        df = pd.read_csv(url, dtype=str).fillna("")
+        
+        # Garante que as colunas tenham os nomes corretos, caso a planilha esteja vazia
+        colunas_esperadas = ['NomeProjeto', 'Ocupacao', 'Area', 'Altura', 'UltimoUsuario', 'UltimaModicacao']
+        # Adiciona colunas que possam estar faltando no CSV (se a planilha estiver vazia)
+        for col in colunas_esperadas:
+            if col not in df.columns:
+                df[col] = ""
+
         return df
     except Exception as e:
-        if "WorksheetNotFound" in str(e):
-            return pd.DataFrame(columns=['NomeProjeto', 'Ocupacao', 'Area', 'Altura', 'UltimoUsuario', 'UltimaModificacao'])
-        else:
-            st.error(f"Ocorreu um erro ao ler a planilha: {e}")
-            return None
+        st.error(f"Ocorreu um erro ao ler a planilha pública. Verifique se o link está compartilhado com 'Qualquer pessoa com o link'. Erro: {e}")
+        return pd.DataFrame() # Retorna um DataFrame vazio em caso de erro
 
 # --- TELAS DA APLICAÇÃO ---
 
