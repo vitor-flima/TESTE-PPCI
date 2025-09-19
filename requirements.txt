@@ -1,3 +1,3 @@
 streamlit
-st-supabase-connection
 pandas
+openpyxl
