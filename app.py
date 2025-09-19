@@ -111,3 +111,4 @@ if linha_selecionada is not None:
         data=output.getvalue(),
         file_name=nome_arquivo_saida
     )
+
