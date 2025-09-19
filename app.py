@@ -72,9 +72,6 @@ if linha_selecionada is not None:
     linha_selecionada["UltimoUsuario"] = st.text_input("Seu nome", value=linha_selecionada["UltimoUsuario"])
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-    st.write("📊 Visualização da nova linha:")
-    st.dataframe(pd.DataFrame([linha_selecionada]))
-
     # Adiciona nova linha ao histórico
     df_novo = pd.DataFrame([linha_selecionada])
     if modo == "📄 Revisar projeto existente" and arquivo:
