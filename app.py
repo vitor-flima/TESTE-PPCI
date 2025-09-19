@@ -17,11 +17,7 @@ if 'user_name' not in st.session_state:
 
 # --- CONEXÃO COM O SUPABASE ---
 try:
-   conn = st.connection(
-    "supabase",
-    type=SupabaseConnection,
-    url="https://cohrnyrtazrcgemiakqr.supabase.co"
-)
+   conn = st.connection("supabase", type=SupabaseConnection)
 except Exception as e:
     st.error("Erro ao conectar com o Supabase. Verifique a configuração em .streamlit/secrets.toml.")
     st.exception(e)
