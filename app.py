@@ -55,7 +55,12 @@ elif modo == "🆕 Criar novo projeto":
         "Area": 100.0,
         "Altura": 3.0,
         "UltimoUsuario": "",
-        "UltimaModificacao": datetime.now().strftime('%d/%m/%Y %H:%M')
+        "UltimaModificacao": datetime.now().strftime('%d/%m/%Y %H:%M'),
+        "Anexo1": "",
+        "Anexo2": "",
+        "Anexo3": "",
+        "Anexo4": "",
+        "Anexo5": ""
     })
     st.info("Novo projeto iniciado. Preencha os dados abaixo.")
 
@@ -69,8 +74,22 @@ if linha_selecionada is not None:
     linha_selecionada["Ocupacao"] = st.selectbox("Ocupação", ["A-1", "B-2", "C-3"], index=["A-1", "B-2", "C-3"].index(linha_selecionada["Ocupacao"]))
     linha_selecionada["Area"] = st.number_input("Área (m²)", value=float(linha_selecionada["Area"]))
     linha_selecionada["Altura"] = st.number_input("Altura (m)", value=float(linha_selecionada["Altura"]))
-    linha_selecionada["UltimoUsuario"] = st.text_input("Seu nome", value=linha_selecionada["UltimoUsuario"])
+    
+    # Insere nome do usuário + Copilot
+    nome_usuario = st.text_input("Seu nome", value="Vitor")
+    linha_selecionada["UltimoUsuario"] = f"{nome_usuario} + Copilot"
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
+
+    # 🔗 Anexos
+    st.markdown("### 📎 Anexos do Projeto")
+    adicionar_anexos = st.radio("Adicionar anexos?", ["Não", "Sim"])
+    if adicionar_anexos == "Sim":
+        qtd_anexos = st.number_input("Selecione a quantidade de anexos", min_value=1, max_value=5, step=1)
+        for i in range(1, 6):
+            if i <= qtd_anexos:
+                linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}")
+            else:
+                linha_selecionada[f"Anexo{i}"] = ""
 
     # Adiciona nova linha ao histórico
     df_novo = pd.DataFrame([linha_selecionada])
