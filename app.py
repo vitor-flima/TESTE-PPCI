@@ -37,7 +37,6 @@ if modo == "📄 Revisar projeto existente":
             df = pd.read_excel(arquivo)
             st.success("Planilha carregada com sucesso!")
 
-            # Verifica se há múltiplas revisões
             if len(df) > 1:
                 opcoes = [f"{i} - {df.loc[i, 'NomeProjeto']} (Rev: {df.loc[i, 'UltimaModificacao']})" for i in df.index]
                 idx = st.selectbox("Selecione a revisão base para editar", options=df.index, format_func=lambda i: opcoes[i])
@@ -60,7 +59,12 @@ elif modo == "🆕 Criar novo projeto":
         "Anexo2": "",
         "Anexo3": "",
         "Anexo4": "",
-        "Anexo5": ""
+        "Anexo5": "",
+        "SubsoloTecnico": "",
+        "SubsoloComOcupacao": "",
+        "SubsoloMenor50m2": "",
+        "DuplexUltimoPavimento": "",
+        "AticoOuCasaMaquinas": ""
     })
     st.info("Novo projeto iniciado. Preencha os dados abaixo.")
 
@@ -88,31 +92,45 @@ if linha_selecionada is not None:
 st.markdown("---")
 st.markdown("### 🏗️ Enquadramento da Edificação A-2")
 
-# Campos técnicos
-if linha_selecionada is not None:
-    st.text("Classificação da Ocupação: A-2 (fixo)")
-    linha_selecionada["Ocupacao"] = "A-2"
+# Classificação fixa
+st.text("Classificação da Ocupação: A-2 (fixo)")
+linha_selecionada["Ocupacao"] = "A-2"
 
-    linha_selecionada["Area"] = st.number_input("Área (m²)", value=float(linha_selecionada["Area"]))
-    linha_selecionada["Altura"] = st.number_input("Altura (m)", value=float(linha_selecionada["Altura"]))
+# Área da edificação
+linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada["Area"]))
 
-    # Adiciona nova linha ao histórico
-    df_novo = pd.DataFrame([linha_selecionada])
-    if modo == "📄 Revisar projeto existente" and arquivo:
-        df = pd.concat([df, df_novo], ignore_index=True)
-    else:
-        df = df_novo.copy()
+# Perguntas antes da altura
+st.markdown("#### 📐 Altura da edificação")
 
-    # Gera nome do arquivo de saída
-    nome_projeto = linha_selecionada["NomeProjeto"]
-    nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
+linha_selecionada["SubsoloTecnico"] = st.radio("Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?", ["Não", "Sim"])
+if linha_selecionada["SubsoloTecnico"] == "Sim":
+    linha_selecionada["SubsoloComOcupacao"] = st.radio("Um dos dois primeiros subsolos abaixo do térreo possui outra ocupação?", ["Não", "Sim"])
+    if linha_selecionada["SubsoloComOcupacao"] == "Sim":
+        linha_selecionada["SubsoloMenor50m2"] = st.radio("Essa outra ocupação tem no máximo 50m² em cada subsolo?", ["Não", "Sim"])
 
-    # Prepara arquivo para download
-    output = io.BytesIO()
-    df.to_excel(output, index=False)
+linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
+linha_selecionada["AticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
 
-    st.download_button(
-        "📥 Baixar planilha atualizada",
-        data=output.getvalue(),
-        file_name=nome_arquivo_saida
-    )
+# Campo de altura
+linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
+
+# Adiciona nova linha ao histórico
+df_novo = pd.DataFrame([linha_selecionada])
+if modo == "📄 Revisar projeto existente" and arquivo:
+    df = pd.concat([df, df_novo], ignore_index=True)
+else:
+    df = df_novo.copy()
+
+# Gera nome do arquivo de saída
+nome_projeto = linha_selecionada["NomeProjeto"]
+nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
+
+# Prepara arquivo para download
+output = io.BytesIO()
+df.to_excel(output, index=False)
+
+st.download_button(
+    "📥 Baixar planilha atualizada",
+    data=output.getvalue(),
+    file_name=nome_arquivo_saida
+)
