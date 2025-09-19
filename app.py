@@ -51,7 +51,7 @@ if modo == "📄 Revisar projeto existente":
 elif modo == "🆕 Criar novo projeto":
     linha_selecionada = pd.Series({
         "NomeProjeto": "",
-        "Ocupacao": "A-1",
+        "Ocupacao": "A-2",
         "Area": 100.0,
         "Altura": 3.0,
         "UltimoUsuario": "",
@@ -86,11 +86,13 @@ if linha_selecionada is not None:
 
 # 🔻 Separação visual entre versão e dados técnicos
 st.markdown("---")
-st.markdown("### ✏️ Informações Técnicas do Projeto")
+st.markdown("### 🏗️ Enquadramento da Edificação A-2")
 
 # Campos técnicos
 if linha_selecionada is not None:
-    linha_selecionada["Ocupacao"] = st.selectbox("Ocupação", ["A-1", "B-2", "C-3"], index=["A-1", "B-2", "C-3"].index(linha_selecionada["Ocupacao"]))
+    st.text("Classificação da Ocupação: A-2 (fixo)")
+    linha_selecionada["Ocupacao"] = "A-2"
+
     linha_selecionada["Area"] = st.number_input("Área (m²)", value=float(linha_selecionada["Area"]))
     linha_selecionada["Altura"] = st.number_input("Altura (m)", value=float(linha_selecionada["Altura"]))
 
