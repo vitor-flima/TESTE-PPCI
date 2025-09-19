@@ -1,20 +1,37 @@
 import streamlit as st
 import pandas as pd
 import io
+import re
 from datetime import datetime
 
 st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
 st.title("📁 Ferramenta de Projetos PPCI")
+
+# Função para gerar nome do arquivo
+def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
+    if nome_arquivo_entrada:
+        match = re.search(r"-R(\d+)", nome_arquivo_entrada)
+        if match:
+            numero = int(match.group(1)) + 1
+        else:
+            numero = 1
+        novo_nome = re.sub(r"-R\d+", f"-R{numero:02}", nome_arquivo_entrada)
+    else:
+        novo_nome = f"checklistINC_{nome_projeto}-R00.xlsx"
+    return novo_nome
 
 # Escolha do modo
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 
 # Inicializa o DataFrame
 df = pd.DataFrame()
+arquivo = None
+nome_arquivo_entrada = None
 
 if modo == "📄 Revisar projeto existente":
     arquivo = st.file_uploader("Anexe a planilha do projeto (.xlsx)", type=["xlsx"])
     if arquivo:
+        nome_arquivo_entrada = arquivo.name
         try:
             df = pd.read_excel(arquivo)
             st.success("Planilha carregada com sucesso!")
@@ -22,7 +39,6 @@ if modo == "📄 Revisar projeto existente":
             st.error(f"Erro ao ler a planilha: {e}")
 
 elif modo == "🆕 Criar novo projeto":
-    # Cria estrutura básica
     df = pd.DataFrame([{
         "NomeProjeto": "",
         "Ocupacao": "A-1",
@@ -47,7 +63,16 @@ if not df.empty:
     st.write("📊 Visualização dos dados:")
     st.dataframe(df)
 
-    # Botão para baixar a planilha atualizada
+    # Gera nome do arquivo de saída
+    nome_projeto = df.loc[0, "NomeProjeto"]
+    nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
+
+    # Prepara arquivo para download
     output = io.BytesIO()
     df.to_excel(output, index=False)
-    st.download_button("📥 Baixar planilha atualizada", data=output.getvalue(), file_name="projeto_ppci_atualizado.xlsx")
+
+    st.download_button(
+        "📥 Baixar planilha atualizada",
+        data=output.getvalue(),
+        file_name=nome_arquivo_saida
+    )
