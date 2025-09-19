@@ -59,10 +59,12 @@ elif modo == "🆕 Criar novo projeto":
     })
     st.info("Novo projeto iniciado. Preencha os dados abaixo.")
 
+# 🔻 Separação visual entre modo e edição
+st.markdown("---")
+st.markdown("### ✏️ Informações do Projeto")
+
 # Se houver dados para edição
 if linha_selecionada is not None:
-    st.subheader("📝 Dados do Projeto")
-
     linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada["NomeProjeto"])
     linha_selecionada["Ocupacao"] = st.selectbox("Ocupação", ["A-1", "B-2", "C-3"], index=["A-1", "B-2", "C-3"].index(linha_selecionada["Ocupacao"]))
     linha_selecionada["Area"] = st.number_input("Área (m²)", value=float(linha_selecionada["Area"]))
