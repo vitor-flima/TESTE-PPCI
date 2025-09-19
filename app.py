@@ -64,23 +64,16 @@ elif modo == "🆕 Criar novo projeto":
     })
     st.info("Novo projeto iniciado. Preencha os dados abaixo.")
 
-# 🔻 Separação visual entre modo e edição
-st.markdown("---")
-st.markdown("### ✏️ Informações do Projeto")
-
-# Se houver dados para edição
+# 🔝 Informações gerais da versão
 if linha_selecionada is not None:
+    st.markdown("### 🧾 Versão do Projeto")
+
     linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada["NomeProjeto"])
-    linha_selecionada["Ocupacao"] = st.selectbox("Ocupação", ["A-1", "B-2", "C-3"], index=["A-1", "B-2", "C-3"].index(linha_selecionada["Ocupacao"]))
-    linha_selecionada["Area"] = st.number_input("Área (m²)", value=float(linha_selecionada["Area"]))
-    linha_selecionada["Altura"] = st.number_input("Altura (m)", value=float(linha_selecionada["Altura"]))
     
-    # Insere nome do usuário + Copilot
     nome_usuario = st.text_input("Seu nome", value="Vitor")
     linha_selecionada["UltimoUsuario"] = f"{nome_usuario} + Copilot"
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-    # 🔗 Anexos
     st.markdown("### 📎 Anexos do Projeto")
     adicionar_anexos = st.radio("Adicionar anexos?", ["Não", "Sim"])
     if adicionar_anexos == "Sim":
@@ -90,6 +83,16 @@ if linha_selecionada is not None:
                 linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}")
             else:
                 linha_selecionada[f"Anexo{i}"] = ""
+
+# 🔻 Separação visual entre versão e dados técnicos
+st.markdown("---")
+st.markdown("### ✏️ Informações Técnicas do Projeto")
+
+# Campos técnicos
+if linha_selecionada is not None:
+    linha_selecionada["Ocupacao"] = st.selectbox("Ocupação", ["A-1", "B-2", "C-3"], index=["A-1", "B-2", "C-3"].index(linha_selecionada["Ocupacao"]))
+    linha_selecionada["Area"] = st.number_input("Área (m²)", value=float(linha_selecionada["Area"]))
+    linha_selecionada["Altura"] = st.number_input("Altura (m)", value=float(linha_selecionada["Altura"]))
 
     # Adiciona nova linha ao histórico
     df_novo = pd.DataFrame([linha_selecionada])
