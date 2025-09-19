@@ -23,10 +23,11 @@ def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
 # Escolha do modo
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 
-# Inicializa o DataFrame
+# Inicializa variáveis
 df = pd.DataFrame()
 arquivo = None
 nome_arquivo_entrada = None
+linha_selecionada = None
 
 if modo == "📄 Revisar projeto existente":
     arquivo = st.file_uploader("Anexe a planilha do projeto (.xlsx)", type=["xlsx"])
@@ -35,36 +36,52 @@ if modo == "📄 Revisar projeto existente":
         try:
             df = pd.read_excel(arquivo)
             st.success("Planilha carregada com sucesso!")
+
+            # Verifica se há múltiplas revisões
+            if len(df) > 1:
+                opcoes = [f"{i} - {df.loc[i, 'NomeProjeto']} (Rev: {df.loc[i, 'UltimaModificacao']})" for i in df.index]
+                idx = st.selectbox("Selecione a revisão base para editar", options=df.index, format_func=lambda i: opcoes[i])
+                linha_selecionada = df.loc[idx].copy()
+            else:
+                linha_selecionada = df.loc[0].copy()
+
         except Exception as e:
             st.error(f"Erro ao ler a planilha: {e}")
 
 elif modo == "🆕 Criar novo projeto":
-    df = pd.DataFrame([{
+    linha_selecionada = pd.Series({
         "NomeProjeto": "",
         "Ocupacao": "A-1",
         "Area": 100.0,
         "Altura": 3.0,
         "UltimoUsuario": "",
         "UltimaModificacao": datetime.now().strftime('%d/%m/%Y %H:%M')
-    }])
+    })
     st.info("Novo projeto iniciado. Preencha os dados abaixo.")
 
-# Se o DataFrame estiver disponível, mostra os campos para edição
-if not df.empty:
+# Se houver dados para edição
+if linha_selecionada is not None:
     st.subheader("📝 Dados do Projeto")
 
-    df.loc[0, "NomeProjeto"] = st.text_input("Nome do Projeto", value=df.loc[0, "NomeProjeto"])
-    df.loc[0, "Ocupacao"] = st.selectbox("Ocupação", ["A-1", "B-2", "C-3"], index=["A-1", "B-2", "C-3"].index(df.loc[0, "Ocupacao"]))
-    df.loc[0, "Area"] = st.number_input("Área (m²)", value=float(df.loc[0, "Area"]))
-    df.loc[0, "Altura"] = st.number_input("Altura (m)", value=float(df.loc[0, "Altura"]))
-    df.loc[0, "UltimoUsuario"] = st.text_input("Seu nome", value=df.loc[0, "UltimoUsuario"])
-    df.loc[0, "UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
+    linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada["NomeProjeto"])
+    linha_selecionada["Ocupacao"] = st.selectbox("Ocupação", ["A-1", "B-2", "C-3"], index=["A-1", "B-2", "C-3"].index(linha_selecionada["Ocupacao"]))
+    linha_selecionada["Area"] = st.number_input("Área (m²)", value=float(linha_selecionada["Area"]))
+    linha_selecionada["Altura"] = st.number_input("Altura (m)", value=float(linha_selecionada["Altura"]))
+    linha_selecionada["UltimoUsuario"] = st.text_input("Seu nome", value=linha_selecionada["UltimoUsuario"])
+    linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-    st.write("📊 Visualização dos dados:")
-    st.dataframe(df)
+    st.write("📊 Visualização da nova linha:")
+    st.dataframe(pd.DataFrame([linha_selecionada]))
+
+    # Adiciona nova linha ao histórico
+    df_novo = pd.DataFrame([linha_selecionada])
+    if modo == "📄 Revisar projeto existente" and arquivo:
+        df = pd.concat([df, df_novo], ignore_index=True)
+    else:
+        df = df_novo.copy()
 
     # Gera nome do arquivo de saída
-    nome_projeto = df.loc[0, "NomeProjeto"]
+    nome_projeto = linha_selecionada["NomeProjeto"]
     nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
 
     # Prepara arquivo para download
