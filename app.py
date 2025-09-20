@@ -132,7 +132,7 @@ if linha_selecionada is not None:
 
     # 💡 Explicação da altura
     s1 = linha_selecionada["SubsoloTecnico"]
-    s2 = linha_selecion
+    s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
     s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
     duplex = linha_selecionada["DuplexUltimoPavimento"]
 
