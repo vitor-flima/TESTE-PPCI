@@ -132,4 +132,4 @@ if linha_selecionada is not None:
     # 💡 Explicação da altura (antes do campo de entrada)
     s1 = linha_selecionada["SubsoloTecnico"]
     s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
-    s3 = linha_selecionada.get("SubsoloMenor50m2", "
+    s3 = linha_selecionada.get("
