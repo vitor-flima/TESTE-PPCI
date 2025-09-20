@@ -16,6 +16,52 @@ def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
         novo_nome = f"checklistINC_{nome_projeto}-R00.xlsx"
     return novo_nome
 
+def faixa_altura(h):
+    if h == 0:
+        return "Térrea"
+    elif h < 6:
+        return "H < 6 m"
+    elif h < 12:
+        return "6 ≤ H < 12 m"
+    elif h < 23:
+        return "12 ≤ H < 23 m"
+    elif h < 30:
+        return "23 ≤ H < 30 m"
+    else:
+        return "Acima de 30 m"
+
+def medidas_por_faixa(faixa):
+    tabela = {
+        "Acesso de Viatura na Edificação": ["X"] * 6,
+        "Segurança Estrutural contra Incêndio": ["X"] * 6,
+        "Compartimentação Horizontal ou de Área": ["X⁴"] * 6,
+        "Compartimentação de Verticais": ["", "", "", "X²", "X²", "X²"],
+        "Controle de Materiais de Acabamento": ["", "", "", "X", "X", "X"],
+        "Saídas de Emergência": ["X", "X", "X", "X", "X", "X¹"],
+        "Brigada de Incêndio": ["X"] * 6,
+        "Iluminação de Emergência": ["X"] * 6,
+        "Alarme de Incêndio": ["X³", "X³", "X³", "X³", "X³", "X"],
+        "Sinalização de Emergência": ["X"] * 6,
+        "Extintores": ["X"] * 6,
+        "Hidrantes e Mangotinhos": ["X"] * 6
+    }
+    faixas = ["Térrea", "H < 6 m", "6 ≤ H < 12 m", "12 ≤ H < 23 m", "23 ≤ H < 30 m", "Acima de 30 m"]
+    idx = faixas.index(faixa)
+    resumo = {medida: tabela[medida][idx] for medida in tabela}
+    return resumo
+
+def notas_relevantes(resumo, altura):
+    notas = []
+    if altura >= 30:
+        notas.append("1 – Deve haver Elevador de Emergência para altura maior que 80 m")
+    if any("X²" in v for v in resumo.values()):
+        notas.append("2 – Pode ser substituída por sistema de controle de fumaça somente nos átrios")
+    if any("X³" in v for v in resumo.values()):
+        notas.append("3 – O sistema de alarme pode ser setorizado na central junto à portaria, desde que tenha vigilância 24 horas")
+    if any("X⁴" in v for v in resumo.values()):
+        notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
+    return notas
+
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 
 df = pd.DataFrame()
@@ -68,10 +114,7 @@ if linha_selecionada is not None:
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
 
-    # 🔻 Separação visual reforçada
     st.markdown("<hr style='border: 2px solid #bbb; margin-top: 30px; margin-bottom: 20px;'>", unsafe_allow_html=True)
-
-    # 🧱 Enquadramento da edificação A-2
     st.markdown("### 🧱 Enquadramento da edificação A-2")
     linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada["Area"]))
 
@@ -88,37 +131,4 @@ if linha_selecionada is not None:
     linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
 
     # 🧠 Frase explicativa da altura
-    s1 = linha_selecionada["SubsoloTecnico"]
-    s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
-    s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
-    duplex = linha_selecionada["DuplexUltimoPavimento"]
-
-    if duplex == "Sim":
-        parte_superior = "Cota do primeiro pavimento do duplex"
-    else:
-        parte_superior = "Cota de piso do último pavimento habitado"
-
-    if s1 == "Não" and s2 == "Não":
-        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-    elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
-        parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
-    else:
-        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-
-    explicacao = f"Altura da edificação é: {parte_superior} - {parte_inferior}"
-    st.markdown(f"💡 **{explicacao}**")
-
-    df_novo = pd.DataFrame([linha_selecionada])
-    df = pd.concat([df, df_novo], ignore_index=True) if modo == "📄 Revisar projeto existente" and arquivo else df_novo.copy()
-
-    nome_projeto = linha_selecionada["NomeProjeto"]
-    nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
-
-    output = io.BytesIO()
-    df.to_excel(output, index=False)
-
-    st.download_button(
-        "📥 Baixar planilha atualizada",
-        data=output.getvalue(),
-        file_name=nome_arquivo_saida
-    )
+    s1 = linha_se
