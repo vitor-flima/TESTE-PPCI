@@ -168,45 +168,46 @@ if linha_selecionada is not None:
         for nota in notas:
             st.markdown(f"- {nota}")
  # 🗒️ Comentários do projetista
-    st.markdown("### 🗒️ Comentários sobre este tópico")
-    linha_selecionada["ComentarioAltura"] = st.text_area("Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis")
-    
+st.markdown("### 🗒️ Comentários sobre este tópico")
+linha_selecionada["ComentarioAltura"] = st.text_area("Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis")
+
+# 🔍 Detalhamento por medida de segurança
 if linha_selecionada is not None:
     st.markdown("## 🧯 Detalhamento por medida de segurança")
 
-for medida, aplicacao in resumo.items():
-    if "X" in aplicacao:
+    for medida, aplicacao in resumo.items():
+        if "X" in aplicacao:
 
-        # 🔹 Tópico específico: Acesso de Viatura na Edificação
-        if medida == "Acesso de Viatura na Edificação":
-            with st.expander(f"🔹 {medida}"):
-                st.markdown("**Será previsto hidrante de recalque a não mais que 20m do limite da edificação?**")
-                
-                hidrante_recalque = st.radio("Resposta:", ["Sim", "Não"], key="hidrante_recalque")
+            # 🔹 Tópico específico: Acesso de Viatura na Edificação
+            if medida == "Acesso de Viatura na Edificação":
+                with st.expander(f"🔹 {medida}"):
+                    st.markdown("**Será previsto hidrante de recalque a não mais que 20m do limite da edificação?**")
+                    
+                    hidrante_recalque = st.radio("Resposta:", ["Sim", "Não"], key="hidrante_recalque")
 
-                st.markdown(
-                    "<span style='color:red'>⚠️ O hidrante de recalque a menos de 20m anula as exigências a respeito do acesso de viaturas na edificação.</span>",
-                    unsafe_allow_html=True
-                )
+                    st.markdown(
+                        "<span style='color:red'>⚠️ O hidrante de recalque a menos de 20m anula as exigências a respeito do acesso de viaturas na edificação.</span>",
+                        unsafe_allow_html=True
+                    )
 
-                if hidrante_recalque == "Sim":
-                    st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
-                else:
-                    st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
-                    st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
+                    if hidrante_recalque == "Sim":
+                        st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
+                    else:
+                        st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
+                        st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
 
-        # 🔹 Outros tópicos genéricos
-        else:
-            with st.expander(f"🔹 {medida}"):
-                st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
-                if "¹" in aplicacao:
-                    st.markdown("📌 Observação especial: ver nota 1")
-                elif "²" in aplicacao:
-                    st.markdown("📌 Observação especial: ver nota 2")
-                elif "³" in aplicacao:
-                    st.markdown("📌 Observação especial: ver nota 3")
-                elif "⁴" in aplicacao:
-                    st.markdown("📌 Observação especial: ver nota 4")
+            # 🔹 Outros tópicos genéricos
+            else:
+                with st.expander(f"🔹 {medida}"):
+                    st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
+                    if "¹" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 1")
+                    elif "²" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 2")
+                    elif "³" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 3")
+                    elif "⁴" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 4")
 
     # 📥 Exportação final (fora do loop!)
     st.markdown("## 📥 Exportar planilha atualizada")
@@ -223,5 +224,5 @@ for medida, aplicacao in resumo.items():
         data=output.getvalue(),
         file_name=nome_arquivo_saida,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_button_final"
+        key="download_button_final"  # ✅ chave única e fora do loop
     )
