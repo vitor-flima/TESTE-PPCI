@@ -212,6 +212,36 @@ if linha_selecionada is not None:
                     else:
                         st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
                         st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
+                # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
+                if medida == "Segurança Estrutural contra Incêndio":
+                    st.markdown("### 🔥 Segurança Estrutural contra Incêndio (TRRF)")
+    
+                    area_total = linha_selecionada["Area"]
+                    altura_edificacao = linha_selecionada["Altura"]
+                    tipo_edificacao = linha_selecionada.get("TipoEdificacao", "Mais de um pavimento")
+                    num_subsolos = linha_selecionada.get("NumeroSubsolos", 0)
+                    area_subsolo = linha_selecionada.get("AreaSubsolo", 0.0)
+    
+                    mensagem_trrf = ""
+    
+                    if tipo_edificacao == "Térrea" and num_subsolos == 0:
+                        mensagem_trrf = "A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                    elif altura_edificacao <= 12 and area_total < 1500:
+                        if num_subsolos == 0 or (num_subsolos == 1 and area_subsolo < 500):
+                            mensagem_trrf = "A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                        else:
+                            mensagem_trrf = "Apenas o(s) subsolo(s) deverá apresentar comprovação de TRRF para elementos estruturais."
+                    elif altura_edificacao > 12 or area_total >= 1500:
+                        if num_subsolos == 0 or (num_subsolos == 1 and area_subsolo < 500):
+                            mensagem_trrf = "Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais, com cada pavimento tendo o seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior (O subsolo irá absorver o TRRF do pavimento acima)."
+                        else:
+                            mensagem_trrf = "Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais, com cada pavimento tendo o seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior."
+    
+                    st.info(mensagem_trrf)
+                    st.image("imagem_tabela_normativa.png", caption="Tabela de profundidade de subsolo e altura por grupo e divisão")
+                    st.markdown("### 🗒️ Comentários sobre as considerações adotadas neste tópico")
+                    linha_selecionada["ComentarioTRRF"] = st.text_area("Observações, justificativas ou decisões técnicas sobre TRRF")
+
 
             # 🔹 Outros tópicos genéricos
             else:
