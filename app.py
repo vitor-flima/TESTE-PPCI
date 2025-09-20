@@ -1,15 +1,12 @@
-# IMPORTS
 import streamlit as st
 import pandas as pd
 import io
 import re
 from datetime import datetime
 
-# CONFIGURAÇÃO
 st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
 st.title("📁 Ferramenta de Projetos PPCI")
 
-# FUNÇÕES AUXILIARES
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
         match = re.search(r"-R(\d+)", nome_arquivo_entrada)
@@ -64,7 +61,6 @@ def notas_relevantes(resumo, altura):
         notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
     return notas
 
-# INTERFACE
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 df = pd.DataFrame()
 arquivo = None
@@ -129,4 +125,4 @@ if linha_selecionada is not None:
             linha_selecionada["SubsoloMenor50m2"] = st.radio("Essa ocupação secundária tem no máximo 50m² em cada subsolo?", ["Não", "Sim"])
 
     linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
-    linha_selecionada["AticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima
+    linha_selecionada["AticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de
