@@ -7,6 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
 st.title("📁 Ferramenta de Projetos PPCI")
 
+# Funções auxiliares
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
         match = re.search(r"-R(\d+)", nome_arquivo_entrada)
@@ -61,6 +62,7 @@ def notas_relevantes(resumo, altura):
         notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
     return notas
 
+# Interface principal
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 df = pd.DataFrame()
 arquivo = None
@@ -95,7 +97,7 @@ elif modo == "🆕 Criar novo projeto":
         "UltimaModificacao": datetime.now().strftime('%d/%m/%Y %H:%M'),
         "Anexo1": "", "Anexo2": "", "Anexo3": "", "Anexo4": "", "Anexo5": "",
         "SubsoloTecnico": "", "SubsoloComOcupacao": "", "SubsoloMenor50m2": "",
-        "DuplexUltimoPavimento": "", "AticoOuCasaMaquinas": ""
+        "DuplexUltimoPavimento": "", "ÁticoOuCasaMaquinas": ""
     })
     st.info("Novo projeto iniciado. Preencha os dados abaixo.")
 
@@ -125,4 +127,8 @@ if linha_selecionada is not None:
             linha_selecionada["SubsoloMenor50m2"] = st.radio("Essa ocupação secundária tem no máximo 50m² em cada subsolo?", ["Não", "Sim"])
 
     linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
-    linha_selecionada["AticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de
+    linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
+    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
+
+    # Explicação da altura
+    s1 = linha_selecionada
