@@ -128,3 +128,53 @@ if linha_selecionada is not None:
 
     linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
     linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
+    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
+
+    # 💡 Explicação da altura
+    s1 = linha_selecionada["SubsoloTecnico"]
+    s2 = linha_selecion
+    s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
+    duplex = linha_selecionada["DuplexUltimoPavimento"]
+
+    if duplex == "Sim":
+        parte_superior = "Cota do primeiro pavimento do duplex"
+    else:
+        parte_superior = "Cota de piso do último pavimento habitado"
+
+    if s1 == "Não" and s2 == "Não":
+        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+    elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
+        parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+    else:
+        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+
+    explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
+    st.markdown(explicacao)
+
+    # 🧯 Tabela resumo de medidas de segurança
+    faixa = faixa_altura(linha_selecionada["Altura"])
+    resumo = medidas_por_faixa(faixa)
+    notas = notas_relevantes(resumo, linha_selecionada["Altura"])
+
+    st.markdown("### 🔍 Medidas de Segurança Aplicáveis")
+    df_resumo = pd.DataFrame.from_dict(resumo, orient='index', columns=["Aplicação"])
+    st.table(df_resumo)
+
+    if notas:
+        st.markdown("### 📌 Notas Específicas")
+        for nota in notas:
+            st.markdown(f"- {nota}")
+
+    # 📥 Exportação final
+    df_novo = pd.DataFrame([linha_selecionada])
+    df = pd.concat([df, df_novo], ignore_index=True) if modo == "📄 Revisar projeto existente" and arquivo else df_novo.copy()
+    nome_projeto = linha_selecionada["NomeProjeto"]
+    nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
+    output = io.BytesIO()
+    df.to_excel(output, index=False)
+
+    st.download_button(
+        "📥 Baixar planilha atualizada",
+        data=output.getvalue(),
+        file_name=nome_arquivo_saida
+    )
