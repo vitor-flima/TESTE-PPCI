@@ -80,3 +80,4 @@ st.download_button(
     data=output.getvalue(),
     file_name=nome_arquivo_saida
 )
+
