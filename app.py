@@ -167,6 +167,43 @@ if linha_selecionada is not None:
         st.markdown("### 📌 Notas Específicas")
         for nota in notas:
             st.markdown(f"- {nota}")
+st.markdown("## 🧯 Detalhamento por medida de segurança")
+
+with st.expander("🔹 Acesso de Viatura na Edificação"):
+    st.markdown("Conteúdo técnico sobre acesso de viatura...")
+
+with st.expander("🔹 Segurança Estrutural contra Incêndio"):
+    st.markdown("Conteúdo técnico sobre segurança estrutural...")
+
+with st.expander("🔹 Compartimentação Horizontal ou de Área"):
+    st.markdown("Conteúdo técnico sobre compartimentação horizontal...")
+
+with st.expander("🔹 Compartimentação de Verticais"):
+    st.markdown("Conteúdo técnico sobre compartimentação vertical...")
+
+with st.expander("🔹 Controle de Materiais de Acabamento"):
+    st.markdown("Conteúdo técnico sobre materiais de acabamento...")
+
+with st.expander("🔹 Saídas de Emergência"):
+    st.markdown("Conteúdo técnico sobre saídas de emergência...")
+
+with st.expander("🔹 Brigada de Incêndio"):
+    st.markdown("Conteúdo técnico sobre brigada de incêndio...")
+
+with st.expander("🔹 Iluminação de Emergência"):
+    st.markdown("Conteúdo técnico sobre iluminação de emergência...")
+
+with st.expander("🔹 Alarme de Incêndio"):
+    st.markdown("Conteúdo técnico sobre sistema de alarme...")
+
+with st.expander("🔹 Sinalização de Emergência"):
+    st.markdown("Conteúdo técnico sobre sinalização de emergência...")
+
+with st.expander("🔹 Extintores"):
+    st.markdown("Conteúdo técnico sobre extintores...")
+
+with st.expander("🔹 Hidrantes e Mangotinhos"):
+    st.markdown("Conteúdo técnico sobre hidrantes e mangotinhos...")
 
     # 🗒️ Comentários do projetista
     st.markdown("### 🗒️ Comentários sobre este tópico")
