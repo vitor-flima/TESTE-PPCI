@@ -115,7 +115,7 @@ if linha_selecionada is not None:
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
 
-   st.markdown("### 🧱 Enquadramento da edificação A-2")
+st.markdown("### 🧱 Enquadramento da edificação A-2")
 linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada["Area"]))
 
 # Pergunta condicional sobre tipo de edificação
