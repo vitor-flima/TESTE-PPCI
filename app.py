@@ -84,26 +84,26 @@ if linha_selecionada is not None:
     linha_selecionada["AticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
     linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
 
+    # 🧠 Frase explicativa da altura
     s1 = linha_selecionada["SubsoloTecnico"]
     s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
     s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
     duplex = linha_selecionada["DuplexUltimoPavimento"]
 
-    if s1 == "Não" and s2 == "Não":
-        explicacao = "Altura da edificação é: Cota de piso do último pavimento habitado - cota de piso do pavimento mais baixo, exceto subsolos"
-    elif s1 == "Não" and duplex == "Sim":
-        explicacao = "Altura da edificação é: Cota de piso do primeiro pavimento duplex - cota de piso do pavimento mais baixo, exceto subsolos"
-    elif s1 == "Sim" and s2 == "Não":
-        explicacao = "Altura da edificação é: Cota de piso do último pavimento habitado - cota de piso do pavimento mais baixo, exceto subsolos"
-    elif s1 == "Sim" and s2 == "Sim" and s3 == "Sim":
-        explicacao = "Altura da edificação é: Cota de piso do último pavimento habitado - cota de piso do pavimento mais baixo, exceto subsolos"
-    elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
-        explicacao = "Altura da edificação é: Cota de piso do último pavimento habitado - cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+    if duplex == "Sim":
+        parte_superior = "Cota do primeiro pavimento do duplex"
     else:
-        explicacao = ""
+        parte_superior = "Cota de piso do último pavimento habitado"
 
-    if explicacao:
-        st.markdown(f"💡 **{explicacao}**")
+    if s1 == "Não" and s2 == "Não":
+        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+    elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
+        parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+    else:
+        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+
+    explicacao = f"Altura da edificação é: {parte_superior} - {parte_inferior}"
+    st.markdown(f"💡 **{explicacao}**")
 
     df_novo = pd.DataFrame([linha_selecionada])
     df = pd.concat([df, df_novo], ignore_index=True) if modo == "📄 Revisar projeto existente" and arquivo else df_novo.copy()
