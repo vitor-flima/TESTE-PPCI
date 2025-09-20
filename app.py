@@ -171,26 +171,25 @@ if linha_selecionada is not None:
     st.markdown("### 🗒️ Comentários sobre este tópico")
     linha_selecionada["ComentarioAltura"] = st.text_area("Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis")
     
-st.markdown("## 🧯 Detalhamento por medida de segurança")
+if linha_selecionada is not None:
+    st.markdown("## 🧯 Detalhamento por medida de segurança")
 
+    for medida, aplicacao in resumo.items():
+        if "X" in aplicacao:
+            with st.expander(f"🔹 {medida}"):
+                st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
+                if "¹" in aplicacao:
+                    st.markdown("📌 Observação especial: ver nota 1")
+                elif "²" in aplicacao:
+                    st.markdown("📌 Observação especial: ver nota 2")
+                elif "³" in aplicacao:
+                    st.markdown("📌 Observação especial: ver nota 3")
+                elif "⁴" in aplicacao:
+                    st.markdown("📌 Observação especial: ver nota 4")
 
-for medida, aplicacao in resumo.items():
-    if "X" in aplicacao:
-        with st.expander(f"🔹 {medida}"):
-            st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
-            if "¹" in aplicacao:
-                st.markdown("📌 Observação especial: ver nota 1")
-            elif "²" in aplicacao:
-                st.markdown("📌 Observação especial: ver nota 2")
-            elif "³" in aplicacao:
-                st.markdown("📌 Observação especial: ver nota 3")
-            elif "⁴" in aplicacao:
-                st.markdown("📌 Observação especial: ver nota 4")
+    # 📥 Exportação final (fora do loop!)
+    st.markdown("## 📥 Exportar planilha atualizada")
 
-
-   
-
-    # 📥 Exportação final
     df_novo = pd.DataFrame([linha_selecionada])
     df = pd.concat([df, df_novo], ignore_index=True) if modo == "📄 Revisar projeto existente" and arquivo else df_novo.copy()
     nome_projeto = linha_selecionada["NomeProjeto"]
@@ -199,7 +198,9 @@ for medida, aplicacao in resumo.items():
     df.to_excel(output, index=False)
 
     st.download_button(
-        "📥 Baixar planilha atualizada",
+        label="📥 Baixar planilha atualizada",
         data=output.getvalue(),
-        file_name=nome_arquivo_saida
+        file_name=nome_arquivo_saida,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_button_final"
     )
