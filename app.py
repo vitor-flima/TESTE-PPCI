@@ -145,4 +145,3 @@ st.download_button(
     "📥 Baixar planilha atualizada",
     data=output.getvalue(),
     file_name=nome_arquivo_saida
-)
