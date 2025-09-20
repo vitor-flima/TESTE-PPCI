@@ -1,12 +1,15 @@
+# IMPORTS
 import streamlit as st
 import pandas as pd
 import io
 import re
 from datetime import datetime
 
+# CONFIGURAÇÃO
 st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
 st.title("📁 Ferramenta de Projetos PPCI")
 
+# FUNÇÕES AUXILIARES
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
         match = re.search(r"-R(\d+)", nome_arquivo_entrada)
@@ -47,12 +50,11 @@ def medidas_por_faixa(faixa):
     }
     faixas = ["Térrea", "H < 6 m", "6 ≤ H < 12 m", "12 ≤ H < 23 m", "23 ≤ H < 30 m", "Acima de 30 m"]
     idx = faixas.index(faixa)
-    resumo = {medida: tabela[medida][idx] for medida in tabela}
-    return resumo
+    return {medida: tabela[medida][idx] for medida in tabela}
 
 def notas_relevantes(resumo, altura):
     notas = []
-    if altura >= 30:
+    if altura >= 80:
         notas.append("1 – Deve haver Elevador de Emergência para altura maior que 80 m")
     if any("X²" in v for v in resumo.values()):
         notas.append("2 – Pode ser substituída por sistema de controle de fumaça somente nos átrios")
@@ -62,8 +64,8 @@ def notas_relevantes(resumo, altura):
         notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
     return notas
 
+# INTERFACE
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
-
 df = pd.DataFrame()
 arquivo = None
 nome_arquivo_entrada = None
@@ -127,8 +129,4 @@ if linha_selecionada is not None:
             linha_selecionada["SubsoloMenor50m2"] = st.radio("Essa ocupação secundária tem no máximo 50m² em cada subsolo?", ["Não", "Sim"])
 
     linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
-    linha_selecionada["AticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
-    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
-
-    # 🧠 Frase explicativa da altura
-    s1 = linha_se
+    linha_selecionada["AticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima
