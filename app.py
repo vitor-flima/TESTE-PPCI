@@ -128,8 +128,4 @@ if linha_selecionada is not None:
 
     linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
     linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
-    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
-
-    # 💡 Explicação da altura
-    s1 = linha_selecionada["SubsoloTecnico"]
-    s2 = linha_selecionada.get("SubsoloComOcupacao", "
+    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value
