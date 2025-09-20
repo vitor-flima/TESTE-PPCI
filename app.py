@@ -115,58 +115,58 @@ if linha_selecionada is not None:
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
 
-st.markdown("### 🧱 Enquadramento da edificação A-2")
-linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada["Area"]))
-
-# Pergunta condicional sobre tipo de edificação
-tipo_edificacao = st.radio("A edificação é térrea ou possui mais de um pavimento?", ["Térrea", "Mais de um pavimento"])
-linha_selecionada["TipoEdificacao"] = tipo_edificacao
-
-# Variáveis padrão
-linha_selecionada["Altura"] = 0.0
-linha_selecionada["NumeroSubsolos"] = 0
-linha_selecionada["AreaSubsolo"] = 0.0
-
-if tipo_edificacao == "Mais de um pavimento":
-    st.markdown("### 🏗️ Altura da edificação")
-    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
-
-    # Subsolo
-    linha_selecionada["NumeroSubsolos"] = st.number_input("Número de subsolos", min_value=0, step=1)
-    if linha_selecionada["NumeroSubsolos"] == 1:
-        linha_selecionada["AreaSubsolo"] = st.number_input("Área do subsolo (m²)", min_value=0.0)
-
-    # Campos adicionais
-    linha_selecionada["SubsoloTecnico"] = st.radio("Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?", ["Não", "Sim"])
-    if linha_selecionada["SubsoloTecnico"] == "Sim":
-        st.markdown("<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>", unsafe_allow_html=True)
-        linha_selecionada["SubsoloComOcupacao"] = st.radio("Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?", ["Não", "Sim"])
-        if linha_selecionada["SubsoloComOcupacao"] == "Sim":
-            linha_selecionada["SubsoloMenor50m2"] = st.radio("Essa ocupação secundária tem no máximo 50m² em cada subsolo?", ["Não", "Sim"])
-
-    linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
-    linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
-
-    # 💡 Explicação da altura
-    s1 = linha_selecionada["SubsoloTecnico"]
-    s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
-    s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
-    duplex = linha_selecionada["DuplexUltimoPavimento"]
-
-    if duplex == "Sim":
-        parte_superior = "Cota do primeiro pavimento do duplex"
-    else:
-        parte_superior = "Cota de piso do último pavimento habitado"
-
-    if s1 == "Não" and s2 == "Não":
-        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-    elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
-        parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
-    else:
-        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-
-    explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
-    st.markdown(explicacao)
+    st.markdown("### 🧱 Enquadramento da edificação A-2")
+    linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada["Area"]))
+    
+    # Pergunta condicional sobre tipo de edificação
+    tipo_edificacao = st.radio("A edificação é térrea ou possui mais de um pavimento?", ["Térrea", "Mais de um pavimento"])
+    linha_selecionada["TipoEdificacao"] = tipo_edificacao
+    
+    # Variáveis padrão
+    linha_selecionada["Altura"] = 0.0
+    linha_selecionada["NumeroSubsolos"] = 0
+    linha_selecionada["AreaSubsolo"] = 0.0
+    
+    if tipo_edificacao == "Mais de um pavimento":
+        st.markdown("### 🏗️ Altura da edificação")
+        linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
+    
+        # Subsolo
+        linha_selecionada["NumeroSubsolos"] = st.number_input("Número de subsolos", min_value=0, step=1)
+        if linha_selecionada["NumeroSubsolos"] == 1:
+            linha_selecionada["AreaSubsolo"] = st.number_input("Área do subsolo (m²)", min_value=0.0)
+    
+        # Campos adicionais
+        linha_selecionada["SubsoloTecnico"] = st.radio("Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?", ["Não", "Sim"])
+        if linha_selecionada["SubsoloTecnico"] == "Sim":
+            st.markdown("<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>", unsafe_allow_html=True)
+            linha_selecionada["SubsoloComOcupacao"] = st.radio("Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?", ["Não", "Sim"])
+            if linha_selecionada["SubsoloComOcupacao"] == "Sim":
+                linha_selecionada["SubsoloMenor50m2"] = st.radio("Essa ocupação secundária tem no máximo 50m² em cada subsolo?", ["Não", "Sim"])
+    
+        linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
+        linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
+    
+        # 💡 Explicação da altura
+        s1 = linha_selecionada["SubsoloTecnico"]
+        s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
+        s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
+        duplex = linha_selecionada["DuplexUltimoPavimento"]
+    
+        if duplex == "Sim":
+            parte_superior = "Cota do primeiro pavimento do duplex"
+        else:
+            parte_superior = "Cota de piso do último pavimento habitado"
+    
+        if s1 == "Não" and s2 == "Não":
+            parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+        elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
+            parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+        else:
+            parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+    
+        explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
+        st.markdown(explicacao)
 
 # 🧯 Tabela resumo de medidas de segurança
 faixa = faixa_altura(linha_selecionada["Altura"])
