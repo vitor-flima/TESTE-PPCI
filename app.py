@@ -232,43 +232,43 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
 
     # 🔍 Detalhamento por medida de segurança
     for medida, aplicacao in resumo.items():
-    if "X" in aplicacao:
-        # 🔹 Tópico específico: Acesso de Viatura na Edificação
-        if medida == "Acesso de Viatura na Edificação":
-            with st.expander(f"🔹 {medida}"):
-                # ... conteúdo já existente ...
-
-        # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
-        elif medida == "Segurança Estrutural contra Incêndio":
-            with st.expander(f"🔹 {medida}"):
-                altura = linha_selecionada.get("Altura", 0)
-                area = linha_selecionada.get("Area", 0)
-                subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
-                numero_subsolos = linha_selecionada.get("NumeroSubsolos", "1")
-                area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
-
-                ed_terrea = altura == 0 and subsolo_tecnico == "Não"
-                subsolo_pequeno = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
-                subsolo_grande = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
-
-                if ed_terrea:
-                    st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
-                elif altura <= 12 and area < 500 and (subsolo_tecnico == "Não" or subsolo_pequeno):
-                    st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
-                elif altura <= 12 and area >= 1500 and subsolo_grande:
-                    st.markdown("⚠️ Apenas o(s) subsolo(s) deverá apresentar comprovação de TRRF para elementos estruturais.")
-                elif altura > 12 or area >= 1500:
-                    if subsolo_grande:
-                        st.markdown("⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais, com cada pavimento tendo o seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior.")
+        if "X" in aplicacao:
+            # 🔹 Tópico específico: Acesso de Viatura na Edificação
+            if medida == "Acesso de Viatura na Edificação":
+                with st.expander(f"🔹 {medida}"):
+                    # ... conteúdo já existente ...
+    
+            # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
+            elif medida == "Segurança Estrutural contra Incêndio":
+                with st.expander(f"🔹 {medida}"):
+                    altura = linha_selecionada.get("Altura", 0)
+                    area = linha_selecionada.get("Area", 0)
+                    subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
+                    numero_subsolos = linha_selecionada.get("NumeroSubsolos", "1")
+                    area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
+    
+                    ed_terrea = altura == 0 and subsolo_tecnico == "Não"
+                    subsolo_pequeno = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
+                    subsolo_grande = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
+    
+                    if ed_terrea:
+                        st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
+                    elif altura <= 12 and area < 500 and (subsolo_tecnico == "Não" or subsolo_pequeno):
+                        st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
+                    elif altura <= 12 and area >= 1500 and subsolo_grande:
+                        st.markdown("⚠️ Apenas o(s) subsolo(s) deverá apresentar comprovação de TRRF para elementos estruturais.")
+                    elif altura > 12 or area >= 1500:
+                        if subsolo_grande:
+                            st.markdown("⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais, com cada pavimento tendo o seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior.")
+                        else:
+                            st.markdown("⚠️ A edificação deverá apresentar comprovação de TRRF conforme uso e altura.")
                     else:
-                        st.markdown("⚠️ A edificação deverá apresentar comprovação de TRRF conforme uso e altura.")
-                else:
-                    st.markdown("ℹ️ Situação não prevista explicitamente. Verificar caso específico com base na NBR 14432.")
-
-                linha_selecionada["ComentarioEstrutural"] = st.text_area(
-                    "Observações sobre segurança estrutural",
-                    value=linha_selecionada.get("ComentarioEstrutural", "")
-                )
+                        st.markdown("ℹ️ Situação não prevista explicitamente. Verificar caso específico com base na NBR 14432.")
+    
+                    linha_selecionada["ComentarioEstrutural"] = st.text_area(
+                        "Observações sobre segurança estrutural",
+                        value=linha_selecionada.get("ComentarioEstrutural", "")
+                    )
 
         # 🔹 Outros tópicos genéricos
         else:
