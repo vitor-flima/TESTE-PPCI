@@ -119,12 +119,40 @@ if linha_selecionada is not None:
     linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada["Area"]))
 
     st.markdown("### 🏗️ Altura da edificação")
-    linha_selecionada["SubsoloTecnico"] = st.radio("Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?", ["Não", "Sim"])
-    if linha_selecionada["SubsoloTecnico"] == "Sim":
-        st.markdown("<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>", unsafe_allow_html=True)
-        linha_selecionada["SubsoloComOcupacao"] = st.radio("Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?", ["Não", "Sim"])
-        if linha_selecionada["SubsoloComOcupacao"] == "Sim":
-            linha_selecionada["SubsoloMenor50m2"] = st.radio("Essa ocupação secundária tem no máximo 50m² em cada subsolo?", ["Não", "Sim"])
+    linha_selecionada["SubsoloTecnico"] = st.radio(
+    "Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?",
+    ["Não", "Sim"]
+)
+
+if linha_selecionada["SubsoloTecnico"] == "Sim":
+    st.markdown(
+        "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
+        unsafe_allow_html=True
+    )
+
+    # Novo campo: quantidade de subsolos
+    linha_selecionada["NumeroSubsolos"] = st.radio(
+        "Qual a quantidade de subsolo?",
+        ["1", "Mais de 1"]
+    )
+
+    # Se for apenas 1 subsolo, mostrar opção de área
+    if linha_selecionada["NumeroSubsolos"] == "1":
+        linha_selecionada["AreaSubsolo"] = st.selectbox(
+            "Área do subsolo:",
+            ["Menor que 500m²", "Maior que 500m²"]
+        )
+
+    # Campos adicionais existentes
+    linha_selecionada["SubsoloComOcupacao"] = st.radio(
+        "Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?",
+        ["Não", "Sim"]
+    )
+    if linha_selecionada["SubsoloComOcupacao"] == "Sim":
+        linha_selecionada["SubsoloMenor50m2"] = st.radio(
+            "Essa ocupação secundária tem no máximo 50m² em cada subsolo?",
+            ["Não", "Sim"]
+        )
 
     linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe duplex no último pavimento?", ["Não", "Sim"])
     linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?", ["Não", "Sim"])
