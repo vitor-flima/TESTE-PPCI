@@ -162,12 +162,14 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
         ["Não", "Sim"]
     )
 
-linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
+if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+    if "AticoOuCasaMaquinas" not in linha_selecionada:
+        linha_selecionada["AticoOuCasaMaquinas"] = ""
+
+    linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
         "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
         ["Não", "Sim"]
     )
-
-
 
 # 💡 Explicação da altura (antes do campo de entrada)
 s1 = linha_selecionada["SubsoloTecnico"]
