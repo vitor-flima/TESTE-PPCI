@@ -233,6 +233,10 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
     # 🔍 Detalhamento por medida de segurança
 st.markdown("## 🧯 Detalhamento por medida de segurança")
 
+# ✅ Garantir que resumo está definido
+faixa = faixa_altura(linha_selecionada.get("Altura", 0))
+resumo = medidas_por_faixa(faixa)
+
 for medida, aplicacao in resumo.items():
     if "X" in aplicacao:
         # 🔹 Tópico específico: Acesso de Viatura na Edificação
@@ -292,6 +296,7 @@ for medida, aplicacao in resumo.items():
                     st.markdown("📌 Observação especial: ver nota 3")
                 elif "⁴" in aplicacao:
                     st.markdown("📌 Observação especial: ver nota 4")
+
 
     # 📥 Exportação final
 st.markdown("## 📥 Exportar planilha atualizada")
