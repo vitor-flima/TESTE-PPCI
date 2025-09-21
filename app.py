@@ -185,27 +185,27 @@ else:
 explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
 st.markdown(explicacao)
 
+# Campo de entrada da altura
+linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
 
-    # Campo de entrada da altura
-    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
+# 🧯 Tabela resumo de medidas de segurança
+faixa = faixa_altura(linha_selecionada["Altura"])
+resumo = medidas_por_faixa(faixa)
+notas = notas_relevantes(resumo, linha_selecionada["Altura"])
 
-    # 🧯 Tabela resumo de medidas de segurança
-    faixa = faixa_altura(linha_selecionada["Altura"])
-    resumo = medidas_por_faixa(faixa)
-    notas = notas_relevantes(resumo, linha_selecionada["Altura"])
+st.markdown("### 🔍 Medidas de Segurança Aplicáveis")
+df_resumo = pd.DataFrame.from_dict(resumo, orient='index', columns=["Aplicação"])
+st.table(df_resumo)
 
-    st.markdown("### 🔍 Medidas de Segurança Aplicáveis")
-    df_resumo = pd.DataFrame.from_dict(resumo, orient='index', columns=["Aplicação"])
-    st.table(df_resumo)
+# 📌 Notas específicas
+if notas:
+    st.markdown("### 📌 Notas Específicas")
+    for nota in notas:
+        st.markdown(f"- {nota}")
 
-    # 📌 Notas específicas
-    if notas:
-        st.markdown("### 📌 Notas Específicas")
-        for nota in notas:
-            st.markdown(f"- {nota}")
- # 🗒️ Comentários do projetista
-    st.markdown("### 🗒️ Comentários sobre este tópico")
-    linha_selecionada["ComentarioAltura"] = st.text_area("Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis")
+# 🗒️ Comentários do projetista
+st.markdown("### 🗒️ Comentários sobre este tópico")
+linha_selecionada["ComentarioAltura"] = st.text_area("Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis")
 
 # 🔍 Detalhamento por medida de segurança
 if linha_selecionada is not None and "Altura" in linha_selecionada:
