@@ -220,7 +220,7 @@ if linha_selecionada is not None and "Altura" in linha_selecionada:
         nome_arquivo_saida = gerar_nome_arquivo(linha_selecionada["NomeProjeto"], nome_arquivo_entrada)
 
         output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df_atualizado.to_excel(writer, index=False, sheet_name='Projetos')
         output.seek(0)
 
