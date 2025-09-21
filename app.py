@@ -100,7 +100,7 @@ elif modo == "🆕 Criar novo projeto":
         "DuplexUltimoPavimento": "", "ÁticoOuCasaMaquinas": "",
         "ComentarioAltura": ""
     })
-    st.info("Novo projeto iniciado. Preencha os dados abaixo.")
+    st.success("Novo projeto iniciado. Preencha os dados abaixo.")
 
 if linha_selecionada is not None:
     st.markdown("### 🧾 Versão do Projeto")
