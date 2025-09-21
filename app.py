@@ -68,6 +68,7 @@ df = pd.DataFrame()
 arquivo = None
 nome_arquivo_entrada = None
 linha_selecionada = None
+mostrar_campos = False  # ✅ controle de exibição
 
 if modo == "📄 Revisar projeto existente":
     arquivo = st.file_uploader("Anexe a planilha do projeto (.xlsx)", type=["xlsx"])
@@ -102,21 +103,22 @@ elif modo == "🆕 Criar novo projeto":
         "ComentarioAltura": ""
     })
     st.success("Novo projeto iniciado. Preencha os dados abaixo.")
+    mostrar_campos = True
 
-if linha_selecionada is not None:
-    # 🧾 Versão do Projeto
+# ✅ Exibe campos somente se permitido
+if mostrar_campos:
     st.markdown("### 🧾 Versão do Projeto")
     linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada.get("NomeProjeto", ""))
     nome_usuario = st.text_input("Seu nome", value="Vitor")
     linha_selecionada["UltimoUsuario"] = f"{nome_usuario} + Copilot"
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-    # 📎 Anexos do Projeto
     st.markdown("### 📎 Anexos do Projeto")
     if st.radio("Adicionar anexos?", ["Não", "Sim"]) == "Sim":
         qtd_anexos = st.number_input("Selecione a quantidade de anexos", min_value=1, max_value=5, step=1)
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
+
 
 # 🧱 Enquadramento da edificação A-2
 st.markdown("### 🧱 Enquadramento da edificação A-2")
