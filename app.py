@@ -182,8 +182,11 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
         linha_selecionada["SubsoloComOcupacao"] = "Não"
     s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
 
-s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
-duplex = linha_selecionada["DuplexUltimoPavimento"]
+if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+    if "SubsoloMenor50m2" not in linha_selecionada:
+        linha_selecionada["SubsoloMenor50m2"] = "Não"
+    s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
+
 
 if duplex == "Sim":
     parte_superior = "Cota do primeiro pavimento do duplex"
