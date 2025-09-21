@@ -164,26 +164,27 @@ linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
 )
 
 
-     # 💡 Explicação da altura (antes do campo de entrada)
-    s1 = linha_selecionada["SubsoloTecnico"]
-    s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
-    s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
-    duplex = linha_selecionada["DuplexUltimoPavimento"]
+# 💡 Explicação da altura (antes do campo de entrada)
+s1 = linha_selecionada["SubsoloTecnico"]
+s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
+s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
+duplex = linha_selecionada["DuplexUltimoPavimento"]
 
-    if duplex == "Sim":
-        parte_superior = "Cota do primeiro pavimento do duplex"
-    else:
-        parte_superior = "Cota de piso do último pavimento habitado"
+if duplex == "Sim":
+    parte_superior = "Cota do primeiro pavimento do duplex"
+else:
+    parte_superior = "Cota de piso do último pavimento habitado"
 
-    if s1 == "Não" and s2 == "Não":
-        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-    elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
-        parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
-    else:
-        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+if s1 == "Não" and s2 == "Não":
+    parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
+    parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+else:
+    parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
 
-    explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
-    st.markdown(explicacao)
+explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
+st.markdown(explicacao)
+
 
     # Campo de entrada da altura
     linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
