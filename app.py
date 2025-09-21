@@ -50,15 +50,26 @@ def medidas_por_faixa(faixa):
     idx = faixas.index(faixa)
     return {medida: tabela[medida][idx] for medida in tabela}
 
+def notas_relevantes(resumo, altura):
+    notas = []
+    if altura >= 80:
+        notas.append("1 – Deve haver Elevador de Emergência para altura maior que 80 m")
+    if any("X²" in v for v in resumo.values()):
+        notas.append("2 – Pode ser substituída por sistema de controle de fumaça somente nos átrios")
+    if any("X³" in v for v in resumo.values()):
+        notas.append("3 – O sistema de alarme pode ser setorizado na central junto à portaria, desde que tenha vigilância 24 horas")
+    if any("X⁴" in v for v in resumo.values()):
+        notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
+    return notas
+
 # Interface principal
-modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"], key="modo_inicial")
+modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 df = pd.DataFrame()
 arquivo = None
 nome_arquivo_entrada = None
 linha_selecionada = None
 mostrar_campos = False  # ✅ controle de exibição
 
-# Revisar projeto existente
 if modo == "📄 Revisar projeto existente":
     arquivo = st.file_uploader("Anexe a planilha do projeto (.xlsx)", type=["xlsx"])
     if arquivo:
@@ -74,11 +85,10 @@ if modo == "📄 Revisar projeto existente":
                 linha_selecionada = df.loc[0].copy()
             if isinstance(linha_selecionada, pd.DataFrame):
                 linha_selecionada = linha_selecionada.iloc[0]
-            mostrar_campos = True
+            mostrar_campos = True  # ✅ só ativa se tudo deu certo
         except Exception as e:
             st.error(f"Erro ao ler a planilha: {e}")
 
-# Criar novo projeto
 elif modo == "🆕 Criar novo projeto":
     linha_selecionada = pd.Series({
         "NomeProjeto": "",
@@ -104,29 +114,11 @@ if mostrar_campos:
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
 
     st.markdown("### 📎 Anexos do Projeto")
-    if st.radio("Adicionar anexos?", ["Não", "Sim"], key="adicionar_anexos") == "Sim":
-        qtd_anexos = st.number_input("Selecione a quantidade de anexos", min_value=1, max_value=5, step=1, key="qtd_anexos")
+    if st.radio("Adicionar anexos?", ["Não", "Sim"]) == "Sim":
+        qtd_anexos = st.number_input("Selecione a quantidade de anexos", min_value=1, max_value=5, step=1)
         for i in range(1, 6):
-            linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}", key=f"anexo_{i}") if i <= qtd_anexos else ""
+            linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
 
-    st.markdown("### 📐 Enquadramento da Edificação")
-    linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", min_value=0.0, value=linha_selecionada.get("Area", 0.0), step=10.0, key="area_edificacao")
-    linha_selecionada["SubsoloTecnico"] = st.radio("Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?", ["Não", "Sim"], index=0 if linha_selecionada.get("SubsoloTecnico") == "Não" else 1, key="subsolo_tecnico")
-    linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe mezanino no último pavimento?", ["Não", "Sim"], index=0 if linha_selecionada.get("DuplexUltimoPavimento") == "Não" else 1, key="duplex_ultimo")
-    linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("A edificação possui pavimento com máquinas e casa de bombas acima do último pavimento?", ["Não", "Sim"], index=0 if linha_selecionada.get("ÁticoOuCasaMaquinas") == "Não" else 1, key="atico_maquinas")
-    linha_selecionada["Altura"] = st.number_input("Altura da edificação é: Cota de piso do último pavimento habitado - cota de piso do pavimento mais baixo, exceto subsolo", min_value=0.0, value=linha_selecionada.get("Altura", 0.0), step=0.5, key="altura_edificacao")
-
-    st.markdown("### ✅ Medidas de Segurança Aplicáveis")
-    faixa = faixa_altura(linha_selecionada.get("Altura", 0))
-    resumo = medidas_por_faixa(faixa)
-    for medida, aplicacao in resumo.items():
-        if "X" in aplicacao:
-            st.checkbox(medida, value=True, disabled=True, key=f"medida_{medida}")
-
-    st.markdown("### 📤 Exportar Projeto")
-    nova_linha_df = pd.DataFrame([linha_selecionada])
-    if arquivo is not None and not df.empty:
-        df_atualizado = pd
 
 
 # 🧱 Enquadramento da edificação A-2
@@ -374,5 +366,4 @@ if linha_selecionada is not None:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key="download_button_planilha_final"  # ✅ chave única
     )
-
 
