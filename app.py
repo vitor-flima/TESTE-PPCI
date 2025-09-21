@@ -206,7 +206,7 @@ if linha_selecionada is not None and "Altura" in linha_selecionada:
                     elif "³" in aplicacao:
                         st.markdown("📌 Observação especial: ver nota 3")
                     elif "⁴" in aplicacao:
-                        st.markdown("📌 Observação especial: ver nota 4"
+                        st.markdown("📌 Observação especial: ver nota 4")
 
     # 📥 Exportação final (fora do loop!)
     st.markdown("## 📥 Exportar planilha atualizada")
