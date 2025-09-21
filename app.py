@@ -117,7 +117,7 @@ if linha_selecionada is not None:
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
 
-    # 🧱 Enquadramento da edificação A-2
+# 🧱 Enquadramento da edificação A-2
 st.markdown("### 🧱 Enquadramento da edificação A-2")
 
 # ✅ Garantir que linha_selecionada está inicializada corretamente
@@ -127,7 +127,7 @@ if linha_selecionada is None or not isinstance(linha_selecionada, (dict, pd.Seri
 linha_selecionada["Area"] = st.number_input(
     "Área da edificação A-2 (m²)",
     value=float(linha_selecionada.get("Area", 100.0))
-
+)
 
 # ✅ Novo campo: edificação térrea
 linha_selecionada["EdificacaoTerrea"] = st.radio(
@@ -224,6 +224,7 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
         "Altura da edificação (m)",
         value=float(linha_selecionada["Altura"])
     )
+
 
 
     # 🧯 Tabela resumo de medidas de segurança
