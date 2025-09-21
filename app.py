@@ -163,6 +163,7 @@ linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
     ["Não", "Sim"]
 )
 
+
      # 💡 Explicação da altura (antes do campo de entrada)
     s1 = linha_selecionada["SubsoloTecnico"]
     s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
