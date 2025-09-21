@@ -172,7 +172,11 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
     )
 
 # 💡 Explicação da altura (antes do campo de entrada)
-s1 = linha_selecionada["SubsoloTecnico"]
+if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+    if "SubsoloTecnico" not in linha_selecionada:
+        linha_selecionada["SubsoloTecnico"] = "Não"
+    s1 = linha_selecionada["SubsoloTecnico"]
+
 s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
 s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
 duplex = linha_selecionada["DuplexUltimoPavimento"]
