@@ -265,39 +265,47 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
 
             # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
             elif medida == "Segurança Estrutural contra Incêndio":
-                with st.expander(f"🔹 {medida}"):
-                    # ✅ Condição 1: Edificação térrea — isenta, sem considerar altura ou área
-                    if linha_selecionada.get("EdificacaoTerrea") == "Sim":
-                        st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
+    with st.expander(f"🔹 {medida}"):
+        # ✅ Regra 1: Edificação térrea
+        if linha_selecionada.get("EdificacaoTerrea") == "Sim":
+            st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
 
-                    # ✅ Condição 2: Não térrea — aplicar lógica baseada em altura, área e subsolo
-                    else:
-                        altura = linha_selecionada.get("Altura", 0)
-                        area = linha_selecionada.get("Area", 0)
-                        subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
-                        numero_subsolos = linha_selecionada.get("NumeroSubsolos", "1")
-                        area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
+        # ✅ Regras 2 a 5: Edificação não térrea
+        else:
+            altura = linha_selecionada.get("Altura", 0)
+            area = linha_selecionada.get("Area", 0)
+            subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
+            numero_subsolos = linha_selecionada.get("NumeroSubsolos", "0")
+            area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
 
-                        subsolo_pequeno = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
-                        subsolo_grande = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
+            # Normalizar valores
+            altura_menor_igual_12 = altura <= 12
+            area_menor_1500 = area < 1500
+            area_maior_igual_1500 = area >= 1500
+            subsolo_simples = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
+            subsolo_complexo = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
+            sem_subsolo = subsolo_tecnico == "Não"
 
-                        if altura <= 12 and area < 500 and (subsolo_tecnico == "Não" or subsolo_pequeno):
-                            st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
-                        elif altura <= 12 and area >= 1500 and subsolo_grande:
-                            st.markdown("⚠️ Apenas o(s) subsolo(s) deverá apresentar comprovação de TRRF para elementos estruturais.")
-                        elif altura > 12 or area >= 1500:
-                            if subsolo_grande:
-                                st.markdown("⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais, com cada pavimento tendo o seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior.")
-                            else:
-                                st.markdown("⚠️ A edificação deverá apresentar comprovação de TRRF conforme uso e altura.")
-                        else:
-                            st.markdown("ℹ️ Situação não prevista explicitamente. Verificar caso específico com base na NBR 14432.")
+            # ✅ Regra 2
+            if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
+                st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
 
-                    # Campo opcional para observações
-                    linha_selecionada["ComentarioEstrutural"] = st.text_area(
-                        "Observações sobre segurança estrutural",
-                        value=linha_selecionada.get("ComentarioEstrutural", "")
-                    )
+            # ✅ Regra 3
+            elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
+                st.markdown("⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais.")
+
+            # ✅ Regra 4
+            elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
+                st.markdown("⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior).")
+
+            # ✅ Regra 5
+            elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
+                st.markdown("⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior.")
+
+        # Campo opcional para observações
+        linha_selecionada["ComentarioEstrutural"] = st.text_area(
+            "Observações sobre segurança estrutural",
+            value=linha_selecionada.get("ComentarioEstrutural", "")
 
             # 🔹 Outros tópicos genéricos
             else:
