@@ -250,101 +250,91 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
     )
 
     # 🔍 Detalhamento por medida de segurança
-st.markdown("## 🧯 Detalhamento por medida de segurança")
-
-if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-    altura_valor = linha_selecionada.get("Altura", 0)
-    faixa = faixa_altura(altura_valor)
-    resumo = medidas_por_faixa(faixa)
-
-    for medida, aplicacao in resumo.items():
-        if "X" in aplicacao:
-            # 🔹 Tópico específico: Acesso de Viatura na Edificação
-            if medida == "Acesso de Viatura na Edificação":
-                with st.expander(f"🔹 {medida}"):
-                    st.markdown("**Será previsto hidrante de recalque a não mais que 20m do limite da edificação?**")
-                    hidrante_recalque = st.radio("Resposta:", ["Sim", "Não"], key="hidrante_recalque")
-                    st.markdown(
-                        "<span style='color:red'>⚠️ O hidrante de recalque a menos de 20m anula as exigências a respeito do acesso de viaturas na edificação.</span>",
-                        unsafe_allow_html=True
-                    )
-                    st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
-                    if hidrante_recalque == "Não":
-                        st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
-
-            # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
-elif medida == "Segurança Estrutural contra Incêndio":
-    with st.expander(f"🔹 {medida}"):
-        # ✅ Regra 1: Edificação térrea
-        if linha_selecionada.get("EdificacaoTerrea") == "Sim":
-            resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
-            st.markdown(resposta_trrf)
-
-        else:
-            # ✅ Coleta de dados
-            altura = linha_selecionada.get("Altura", 0)
-            area = linha_selecionada.get("Area", 0)
-            subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
-            numero_subsolos = linha_selecionada.get("NumeroSubsolos", "0")
-            area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
-
-            # ✅ Normalização
-            altura_menor_igual_12 = altura <= 12
-            area_menor_1500 = area < 1500
-            area_maior_igual_1500 = area >= 1500
-            subsolo_simples = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
-            subsolo_complexo = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
-            sem_subsolo = subsolo_tecnico == "Não"
-
-            # ✅ Regras 2 a 5
-            if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
-                resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
-                st.markdown(resposta_trrf)
-
-            elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
-                resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
-                st.markdown(resposta_trrf)
-
-            elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
-                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
-                st.markdown(resposta_trrf)
-
-            elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
-                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior."
-                st.markdown(resposta_trrf)
-
-            # ✅ Regra 6: Avaliação da cobertura
-            if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
-                cobertura_check = st.radio(
-                    "Algum dos seguintes itens é verdadeiro:\n\nI. A cobertura tem permanência de pessoas ou estoque de algum material?\nII. Faz parte de alguma rota de fuga?\nIII. Seu colapso estrutural compromete a estrutura principal ou paredes externas?",
-                    ["Não", "Sim"],
-                    index=0,
-                    key="cobertura_trrf"
-                )
-
-                if cobertura_check == "Sim":
-                    st.markdown("⚠️ A cobertura deve ter o mesmo TRRF da estrutura principal.")
+    st.markdown("## 🧯 Detalhamento por medida de segurança")
+    
+    if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+        altura_valor = linha_selecionada.get("Altura", 0)
+        faixa = faixa_altura(altura_valor)
+        resumo = medidas_por_faixa(faixa)
+    
+        for medida, aplicacao in resumo.items():
+            if "X" in aplicacao:
+                # 🔹 Tópico específico: Acesso de Viatura na Edificação
+                if medida == "Acesso de Viatura na Edificação":
+                    with st.expander(f"🔹 {medida}"):
+                        st.markdown("**Será previsto hidrante de recalque a não mais que 20m do limite da edificação?**")
+                        hidrante_recalque = st.radio("Resposta:", ["Sim", "Não"], key="hidrante_recalque")
+                        st.markdown(
+                            "<span style='color:red'>⚠️ O hidrante de recalque a menos de 20m anula as exigências a respeito do acesso de viaturas na edificação.</span>",
+                            unsafe_allow_html=True
+                        )
+                        st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
+                        if hidrante_recalque == "Não":
+                            st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
+    
+                # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
+                elif medida == "Segurança Estrutural contra Incêndio":
+                    with st.expander(f"🔹 {medida}"):
+                        if linha_selecionada.get("EdificacaoTerrea") == "Sim":
+                            resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                            st.markdown(resposta_trrf)
+                        else:
+                            altura = linha_selecionada.get("Altura", 0)
+                            area = linha_selecionada.get("Area", 0)
+                            subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
+                            numero_subsolos = linha_selecionada.get("NumeroSubsolos", "0")
+                            area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
+    
+                            altura_menor_igual_12 = altura <= 12
+                            area_menor_1500 = area < 1500
+                            area_maior_igual_1500 = area >= 1500
+                            subsolo_simples = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
+                            subsolo_complexo = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
+                            sem_subsolo = subsolo_tecnico == "Não"
+    
+                            if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
+                                resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                                st.markdown(resposta_trrf)
+                            elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
+                                resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
+                                st.markdown(resposta_trrf)
+                            elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
+                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
+                                st.markdown(resposta_trrf)
+                            elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
+                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior."
+                                st.markdown(resposta_trrf)
+    
+                            # ✅ Regra 6: Avaliação da cobertura
+                            if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
+                                cobertura_check = st.radio(
+                                    "Algum dos seguintes itens é verdadeiro:\n\nI. A cobertura tem permanência de pessoas ou estoque de algum material?\nII. Faz parte de alguma rota de fuga?\nIII. Seu colapso estrutural compromete a estrutura principal ou paredes externas?",
+                                    ["Não", "Sim"],
+                                    index=0,
+                                    key="cobertura_trrf"
+                                )
+                                if cobertura_check == "Sim":
+                                    st.markdown("⚠️ A cobertura deve ter o mesmo TRRF da estrutura principal.")
+                                else:
+                                    st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
+    
+                        linha_selecionada["ComentarioEstrutural"] = st.text_area(
+                            "Observações sobre segurança estrutural",
+                            value=linha_selecionada.get("ComentarioEstrutural", "")
+                        )
+    
+                # 🔹 Outros tópicos genéricos
                 else:
-                    st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
-
-        # Campo opcional para observações
-        linha_selecionada["ComentarioEstrutural"] = st.text_area(
-            "Observações sobre segurança estrutural",
-            value=linha_selecionada.get("ComentarioEstrutural", "")
-        )
-
-# 🔹 Outros tópicos genéricos
-else:
-    with st.expander(f"🔹 {medida}"):
-        st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
-        if "¹" in aplicacao:
-            st.markdown("📌 Observação especial: ver nota 1")
-        elif "²" in aplicacao:
-            st.markdown("📌 Observação especial: ver nota 2")
-        elif "³" in aplicacao:
-            st.markdown("📌 Observação especial: ver nota 3")
-        elif "⁴" in aplicacao:
-            st.markdown("📌 Observação especial: ver nota 4")
+                    with st.expander(f"🔹 {medida}"):
+                        st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
+                        if "¹" in aplicacao:
+                            st.markdown("📌 Observação especial: ver nota 1")
+                        elif "²" in aplicacao:
+                            st.markdown("📌 Observação especial: ver nota 2")
+                        elif "³" in aplicacao:
+                            st.markdown("📌 Observação especial: ver nota 3")
+                        elif "⁴" in aplicacao:
+                            st.markdown("📌 Observação especial: ver nota 4")
 
 # 📥 Exportação final
 st.markdown("## 📥 Exportar planilha atualizada")
@@ -372,3 +362,4 @@ if linha_selecionada is not None:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         key="download_button_planilha_final"  # ✅ chave única
     )
+
