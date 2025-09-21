@@ -327,7 +327,7 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
                             else:
                                 st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
             
-                    # Campo opcional para observações
+            # Campo opcional para observações
                     linha_selecionada["ComentarioEstrutural"] = st.text_area(
                         "Observações sobre segurança estrutural",
                         value=linha_selecionada.get("ComentarioEstrutural", "")
