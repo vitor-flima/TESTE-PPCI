@@ -277,17 +277,18 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
                 with st.expander(f"🔹 {medida}"):
                     # ✅ Regra 1: Edificação térrea
                     if linha_selecionada.get("EdificacaoTerrea") == "Sim":
-                        st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
+                        resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                        st.markdown(resposta_trrf)
             
-                    # ✅ Regras 2 a 5: Edificação não térrea
                     else:
+                        # ✅ Coleta de dados
                         altura = linha_selecionada.get("Altura", 0)
                         area = linha_selecionada.get("Area", 0)
                         subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
                         numero_subsolos = linha_selecionada.get("NumeroSubsolos", "0")
                         area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
             
-                        # Normalizar valores
+                        # ✅ Normalização
                         altura_menor_igual_12 = altura <= 12
                         area_menor_1500 = area < 1500
                         area_maior_igual_1500 = area >= 1500
@@ -295,40 +296,55 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
                         subsolo_complexo = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
                         sem_subsolo = subsolo_tecnico == "Não"
             
-                        # ✅ Regra 2
+                        # ✅ Regras 2 a 5
                         if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
-                            st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
+                            resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                            st.markdown(resposta_trrf)
             
-                        # ✅ Regra 3
                         elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
-                            st.markdown("⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais.")
+                            resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
+                            st.markdown(resposta_trrf)
             
-                        # ✅ Regra 4
                         elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
-                            st.markdown("⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior).")
+                            resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
+                            st.markdown(resposta_trrf)
             
-                        # ✅ Regra 5
                         elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
-                            st.markdown("⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior.")
+                            resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior."
+                            st.markdown(resposta_trrf)
+            
+                        # ✅ Regra 6: Avaliação da cobertura
+                        if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
+                            cobertura_check = st.radio(
+                                "Algum dos seguintes itens é verdadeiro:\n\nI. A cobertura tem permanência de pessoas ou estoque de algum material?\nII. Faz parte de alguma rota de fuga?\nIII. Seu colapso estrutural compromete a estrutura principal ou paredes externas?",
+                                ["Não", "Sim"],
+                                index=0,
+                                key="cobertura_trrf"
+                            )
+            
+                            if cobertura_check == "Sim":
+                                st.markdown("⚠️ A cobertura deve ter o mesmo TRRF da estrutura principal.")
+                            else:
+                                st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
             
                     # Campo opcional para observações
                     linha_selecionada["ComentarioEstrutural"] = st.text_area(
                         "Observações sobre segurança estrutural",
                         value=linha_selecionada.get("ComentarioEstrutural", "")
                     )
-
-            # 🔹 Outros tópicos genéricos
-            else:
-                with st.expander(f"🔹 {medida}"):
-                    st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
-                    if "¹" in aplicacao:
-                        st.markdown("📌 Observação especial: ver nota 1")
-                    elif "²" in aplicacao:
-                        st.markdown("📌 Observação especial: ver nota 2")
-                    elif "³" in aplicacao:
-                        st.markdown("📌 Observação especial: ver nota 3")
-                    elif "⁴" in aplicacao:
-                        st.markdown("📌 Observação especial: ver nota 4")
+            
+                        # 🔹 Outros tópicos genéricos
+                        else:
+                            with st.expander(f"🔹 {medida}"):
+                                st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
+                                if "¹" in aplicacao:
+                                    st.markdown("📌 Observação especial: ver nota 1")
+                                elif "²" in aplicacao:
+                                    st.markdown("📌 Observação especial: ver nota 2")
+                                elif "³" in aplicacao:
+                                    st.markdown("📌 Observação especial: ver nota 3")
+                                elif "⁴" in aplicacao:
+                                    st.markdown("📌 Observação especial: ver nota 4")
 
 # 📥 Exportação final
 st.markdown("## 📥 Exportar planilha atualizada")
