@@ -156,15 +156,17 @@ if linha_selecionada is not None and "SubsoloTecnico" in linha_selecionada and l
         )
 
 # ✅ Sempre visíveis — fora do bloco de subsolo
-linha_selecionada["DuplexUltimoPavimento"] = st.radio(
-    "Existe duplex no último pavimento?",
-    ["Não", "Sim"]
-)
+if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+    linha_selecionada["DuplexUltimoPavimento"] = st.radio(
+        "Existe duplex no último pavimento?",
+        ["Não", "Sim"]
+    )
 
-linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
-    "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
-    ["Não", "Sim"]
-)
+   linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
+        "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
+        ["Não", "Sim"]
+    )
+
 
 
 # 💡 Explicação da altura (antes do campo de entrada)
