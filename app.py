@@ -128,7 +128,7 @@ if linha_selecionada is not None:
     ["Não", "Sim"]
 )
 
-if linha_selecionada["SubsoloTecnico"] == "Sim":
+if linha_selecionada is not None and "SubsoloTecnico" in linha_selecionada and linha_selecionada["SubsoloTecnico"] == "Sim":
     st.markdown(
         "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
         unsafe_allow_html=True
