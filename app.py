@@ -119,8 +119,6 @@ if mostrar_campos:
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
 
-
-
 # 🧱 Enquadramento da edificação A-2
 st.markdown("### 🧱 Enquadramento da edificação A-2")
 
