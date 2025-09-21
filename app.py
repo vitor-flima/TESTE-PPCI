@@ -294,8 +294,11 @@ for medida, aplicacao in resumo.items():
                     st.markdown("📌 Observação especial: ver nota 4")
 
     # 📥 Exportação final
-    st.markdown("## 📥 Exportar planilha atualizada")
+st.markdown("## 📥 Exportar planilha atualizada")
+
+if linha_selecionada is not None:
     nova_linha_df = pd.DataFrame([linha_selecionada])
+
     if arquivo and not df.empty:
         df_atualizado = pd.concat([df, nova_linha_df], ignore_index=True)
     else:
@@ -309,9 +312,9 @@ for medida, aplicacao in resumo.items():
     output.seek(0)
 
     st.download_button(
-        label="Baixar Planilha Atualizada",
+        label="📥 Baixar Planilha Atualizada",
         data=output.getvalue(),
         file_name=nome_arquivo_saida,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_button_final"
+        key="download_button_planilha_final"  # ✅ chave única
     )
