@@ -119,7 +119,15 @@ if linha_selecionada is not None:
 
     # 🧱 Enquadramento da edificação A-2
 st.markdown("### 🧱 Enquadramento da edificação A-2")
-linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada.get("Area", 100.0)))
+
+# ✅ Garantir que linha_selecionada está inicializada corretamente
+if linha_selecionada is None or not isinstance(linha_selecionada, (dict, pd.Series)):
+    linha_selecionada = {}
+
+linha_selecionada["Area"] = st.number_input(
+    "Área da edificação A-2 (m²)",
+    value=float(linha_selecionada.get("Area", 100.0))
+
 
 # ✅ Novo campo: edificação térrea
 linha_selecionada["EdificacaoTerrea"] = st.radio(
