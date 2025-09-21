@@ -357,7 +357,8 @@ if linha_selecionada is not None:
     else:
         df_atualizado = nova_linha_df
 
-    nome_arquivo_saida = gerar_nome_arquivo(linha_selecionada["NomeProjeto"], nome_arquivo_entrada)
+    nome_projeto = linha_selecionada.get("NomeProjeto", "ProjetoSemNome")
+    nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
 
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
