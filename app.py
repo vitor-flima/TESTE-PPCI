@@ -70,6 +70,7 @@ nome_arquivo_entrada = None
 linha_selecionada = None
 mostrar_campos = False  # ✅ controle de exibição
 
+# Revisar projeto existente
 if modo == "📄 Revisar projeto existente":
     arquivo = st.file_uploader("Anexe a planilha do projeto (.xlsx)", type=["xlsx"])
     if arquivo:
@@ -89,6 +90,7 @@ if modo == "📄 Revisar projeto existente":
         except Exception as e:
             st.error(f"Erro ao ler a planilha: {e}")
 
+# Criar novo projeto
 elif modo == "🆕 Criar novo projeto":
     linha_selecionada = pd.Series({
         "NomeProjeto": "",
@@ -105,7 +107,7 @@ elif modo == "🆕 Criar novo projeto":
     st.success("Novo projeto iniciado. Preencha os dados abaixo.")
     mostrar_campos = True
 
-# ✅ Exibe campos somente se permitido
+# Exibe campos somente se permitido
 if mostrar_campos:
     st.markdown("### 🧾 Versão do Projeto")
     linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada.get("NomeProjeto", ""))
@@ -118,6 +120,7 @@ if mostrar_campos:
         qtd_anexos = st.number_input("Selecione a quantidade de anexos", min_value=1, max_value=5, step=1)
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
+
 
 # 🧱 Enquadramento da edificação A-2
 st.markdown("### 🧱 Enquadramento da edificação A-2")
