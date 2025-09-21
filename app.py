@@ -162,7 +162,7 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
         ["Não", "Sim"]
     )
 
-   linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
+linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
         "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
         ["Não", "Sim"]
     )
