@@ -3,6 +3,7 @@ import pandas as pd
 import io
 import re
 from datetime import datetime
+import xlsxwriter
 
 st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
 st.title("📁 Ferramenta de Projetos PPCI")
@@ -68,9 +69,12 @@ df = pd.DataFrame()
 arquivo = None
 nome_arquivo_entrada = None
 linha_selecionada = None
-mostrar_campos = False  # ✅ controle de exibição
+resumo = {} # Define resumo with a default empty dictionary
 
-# Revisar projeto existente
+# Controla se os campos de detalhe devem ser mostrados
+mostrar_detalhes = False
+
+
 if modo == "📄 Revisar projeto existente":
     arquivo = st.file_uploader("Anexe a planilha do projeto (.xlsx)", type=["xlsx"])
     if arquivo:
@@ -86,11 +90,14 @@ if modo == "📄 Revisar projeto existente":
                 linha_selecionada = df.loc[0].copy()
             if isinstance(linha_selecionada, pd.DataFrame):
                 linha_selecionada = linha_selecionada.iloc[0]
-            mostrar_campos = True  # ✅ só ativa se tudo deu certo
+            # Calculate resumo if a file is loaded
+            faixa = faixa_altura(linha_selecionada["Altura"])
+            resumo = medidas_por_faixa(faixa)
+            mostrar_detalhes = True # Ativa a exibição dos detalhes
+
         except Exception as e:
             st.error(f"Erro ao ler a planilha: {e}")
 
-# Criar novo projeto
 elif modo == "🆕 Criar novo projeto":
     linha_selecionada = pd.Series({
         "NomeProjeto": "",
@@ -100,17 +107,21 @@ elif modo == "🆕 Criar novo projeto":
         "UltimoUsuario": "",
         "UltimaModificacao": datetime.now().strftime('%d/%m/%Y %H:%M'),
         "Anexo1": "", "Anexo2": "", "Anexo3": "", "Anexo4": "", "Anexo5": "",
-        "SubsoloTecnico": "", "SubsoloComOcupacao": "", "SubsoloMenor50m2": "",
-        "DuplexUltimoPavimento": "", "ÁticoOuCasaMaquinas": "",
+        "SubsoloTecnico": "Não", "SubsoloComOcupacao": "Não", "SubsoloMenor50m2": "Não",
+        "DuplexUltimoPavimento": "Não", "ÁticoOuCasaMaquinas": "Não",
         "ComentarioAltura": ""
     })
-    st.success("Novo projeto iniciado. Preencha os dados abaixo.")
-    mostrar_campos = True
+    st.info("Novo projeto iniciado. Preencha os dados abaixo.")
+    # Calculate resumo for a new project
+    faixa = faixa_altura(linha_selecionada["Altura"])
+    resumo = medidas_por_faixa(faixa)
+    mostrar_detalhes = True # Ativa a exibição dos detalhes para novo projeto
 
-# Exibe campos somente se permitido
-if mostrar_campos:
+
+# Exibe os detalhes do projeto somente se mostrar_detalhes for True
+if mostrar_detalhes and linha_selecionada is not None:
     st.markdown("### 🧾 Versão do Projeto")
-    linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada.get("NomeProjeto", ""))
+    linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada["NomeProjeto"])
     nome_usuario = st.text_input("Seu nome", value="Vitor")
     linha_selecionada["UltimoUsuario"] = f"{nome_usuario} + Copilot"
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
@@ -119,94 +130,76 @@ if mostrar_campos:
     if st.radio("Adicionar anexos?", ["Não", "Sim"]) == "Sim":
         qtd_anexos = st.number_input("Selecione a quantidade de anexos", min_value=1, max_value=5, step=1)
         for i in range(1, 6):
-            linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
+            linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}", value=linha_selecionada.get(f"Anexo{i}", ""))
 
 
-# 🧱 Enquadramento da edificação A-2
-st.markdown("### 🧱 Enquadramento da edificação A-2")
-
-# ✅ Garantir que linha_selecionada está inicializada corretamente
-if linha_selecionada is None or not isinstance(linha_selecionada, (dict, pd.Series)):
-    linha_selecionada = {}
-
-linha_selecionada["Area"] = st.number_input(
-    "Área da edificação A-2 (m²)",
-    value=float(linha_selecionada.get("Area", 100.0))
-)
-
-# ✅ Novo campo: edificação térrea
-linha_selecionada["EdificacaoTerrea"] = st.radio(
-    "A edificação é térrea?",
-    ["Não", "Sim"],
-    index=0
-)
-
-st.markdown("### 🏗️ Altura da edificação")
-
-# Subsolo — só aparece se NÃO for térrea
-if linha_selecionada["EdificacaoTerrea"] == "Não":
-    linha_selecionada["SubsoloTecnico"] = st.radio(
-        "Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?",
-        ["Não", "Sim"]
+    st.markdown("### 🧱 Enquadramento da edificação A-2")
+    linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada["Area"]))
+    linha_selecionada["EdificacaoTerrea"] = st.radio(
+        "A edificação é térrea?",
+        ["Não", "Sim"],
+        index=0 if linha_selecionada.get("EdificacaoTerrea", "Não") == "Não" else 1 # Mantém o estado se já existir
     )
 
-    if linha_selecionada["SubsoloTecnico"] == "Sim":
-        st.markdown(
-            "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
-            unsafe_allow_html=True
-        )
+    st.markdown("### 🏗️ Altura da edificação")
 
-        linha_selecionada["NumeroSubsolos"] = st.radio(
-            "Qual a quantidade de subsolo?",
-            ["1", "Mais de 1"]
-        )
-
-        if linha_selecionada["NumeroSubsolos"] == "1":
-            linha_selecionada["AreaSubsolo"] = st.selectbox(
-                "Área do subsolo:",
-                ["Menor que 500m²", "Maior que 500m²"]
-            )
-
-        linha_selecionada["SubsoloComOcupacao"] = st.radio(
-            "Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?",
-            ["Não", "Sim"]
-        )
-        if linha_selecionada["SubsoloComOcupacao"] == "Sim":
-            linha_selecionada["SubsoloMenor50m2"] = st.radio(
-                "Essa ocupação secundária tem no máximo 50m² em cada subsolo?",
-                ["Não", "Sim"]
-            )
-
-# ✅ Campos sempre visíveis — fora do bloco de subsolo
-if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+    # Subsolo — só aparece se NÃO for térrea
     if linha_selecionada["EdificacaoTerrea"] == "Não":
-        linha_selecionada["DuplexUltimoPavimento"] = st.radio(
-            "Existe duplex no último pavimento?",
-            ["Não", "Sim"]
+        linha_selecionada["SubsoloTecnico"] = st.radio(
+            "Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?",
+            ["Não", "Sim"],
+            index=0 if linha_selecionada.get("SubsoloTecnico", "Não") == "Não" else 1
         )
 
-        if "AticoOuCasaMaquinas" not in linha_selecionada:
-            linha_selecionada["AticoOuCasaMaquinas"] = ""
+        if linha_selecionada["SubsoloTecnico"] == "Sim":
+            st.markdown(
+                "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
+                unsafe_allow_html=True
+            )
 
-        linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
-            "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
-            ["Não", "Sim"]
-        )
+            linha_selecionada["NumeroSubsolos"] = st.radio(
+                "Qual a quantidade de subsolo?",
+                ["1", "Mais de 1"],
+                 index=0 if linha_selecionada.get("NumeroSubsolos", "1") == "1" else 1
+            )
 
-# 💡 Explicação da altura (antes do campo de entrada)
-if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-    # Garantir que todos os campos existem
-    for campo in ["SubsoloTecnico", "SubsoloComOcupacao", "SubsoloMenor50m2", "DuplexUltimoPavimento"]:
-        if campo not in linha_selecionada:
-            linha_selecionada[campo] = "Não"
+            if linha_selecionada["NumeroSubsolos"] == "1":
+                linha_selecionada["AreaSubsolo"] = st.selectbox(
+                    "Área do subsolo:",
+                    ["Menor que 500m²", "Maior que 500m²"],
+                    index=0 if linha_selecionada.get("AreaSubsolo", "Menor que 500m²") == "Menor que 500m²" else 1
+                )
 
-    # Definir variáveis seguras
-    s1 = linha_selecionada["SubsoloTecnico"]
-    s2 = linha_selecionada["SubsoloComOcupacao"]
-    s3 = linha_selecionada["SubsoloMenor50m2"]
-    duplex = linha_selecionada["DuplexUltimoPavimento"]
+            linha_selecionada["SubsoloComOcupacao"] = st.radio(
+                "Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?",
+                ["Não", "Sim"],
+                index=0 if linha_selecionada.get("SubsoloComOcupacao", "Não") == "Não" else 1
+            )
+            if linha_selecionada["SubsoloComOcupacao"] == "Sim":
+                linha_selecionada["SubsoloMenor50m2"] = st.radio(
+                    "Essa ocupação secundária tem no máximo 50m² em cada subsolo?",
+                    ["Não", "Sim"],
+                     index=0 if linha_selecionada.get("SubsoloMenor50m2", "Não") == "Não" else 1
+                )
 
-    # Lógica de altura
+    linha_selecionada["DuplexUltimoPavimento"] = st.radio(
+        "Existe duplex no último pavimento?",
+        ["Não", "Sim"],
+        index=0 if linha_selecionada.get("DuplexUltimoPavimento", "Não") == "Não" else 1
+    )
+    linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
+        "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
+        ["Não", "Sim"],
+        index=0 if linha_selecionada.get("ÁticoOuCasaMaquinas", "Não") == "Não" else 1
+    )
+
+
+     # 💡 Explicação da altura (antes do campo de entrada)
+    s1 = linha_selecionada.get("SubsoloTecnico", "Não")
+    s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
+    s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
+    duplex = linha_selecionada.get("DuplexUltimoPavimento", "Não")
+
     if duplex == "Sim":
         parte_superior = "Cota do primeiro pavimento do duplex"
     else:
@@ -223,14 +216,7 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
     st.markdown(explicacao)
 
     # Campo de entrada da altura
-    if "Altura" not in linha_selecionada:
-        linha_selecionada["Altura"] = 3.0
-    linha_selecionada["Altura"] = st.number_input(
-        "Altura da edificação (m)",
-        value=float(linha_selecionada["Altura"])
-    )
-
-
+    linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada.get("Altura", 3.0)))
 
     # 🧯 Tabela resumo de medidas de segurança
     faixa = faixa_altura(linha_selecionada["Altura"])
@@ -246,105 +232,107 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
         st.markdown("### 📌 Notas Específicas")
         for nota in notas:
             st.markdown(f"- {nota}")
-
-    # 🗒️ Comentários do projetista
+ # 🗒️ Comentários do projetista
     st.markdown("### 🗒️ Comentários sobre este tópico")
-    linha_selecionada["ComentarioAltura"] = st.text_area(
-        "Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis",
-        value=linha_selecionada.get("ComentarioAltura", "")
-    )
+    linha_selecionada["ComentarioAltura"] = st.text_area("Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis", value=linha_selecionada.get("ComentarioAltura", ""))
 
-    # 🔍 Detalhamento por medida de segurança
+# 🔍 Detalhamento por medida de segurança
+if mostrar_detalhes and linha_selecionada is not None:
     st.markdown("## 🧯 Detalhamento por medida de segurança")
-    
-    if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-        altura_valor = linha_selecionada.get("Altura", 0)
-        faixa = faixa_altura(altura_valor)
-        resumo = medidas_por_faixa(faixa)
-    
-        for medida, aplicacao in resumo.items():
-            if "X" in aplicacao:
-                # 🔹 Tópico específico: Acesso de Viatura na Edificação
-                if medida == "Acesso de Viatura na Edificação":
-                    with st.expander(f"🔹 {medida}"):
-                        st.markdown("**Será previsto hidrante de recalque a não mais que 20m do limite da edificação?**")
-                        hidrante_recalque = st.radio("Resposta:", ["Sim", "Não"], key="hidrante_recalque")
-                        st.markdown(
-                            "<span style='color:red'>⚠️ O hidrante de recalque a menos de 20m anula as exigências a respeito do acesso de viaturas na edificação.</span>",
-                            unsafe_allow_html=True
-                        )
+
+    for medida, aplicacao in resumo.items():
+        if "X" in aplicacao:
+
+            # 🔹 Tópico específico: Acesso de Viatura na Edificação
+            if medida == "Acesso de Viatura na Edificação":
+                with st.expander(f"🔹 {medida}"):
+                    st.markdown("**Será previsto hidrante de recalque a não mais que 20m do limite da edificação?**")
+
+                    # Usar um key único para este radio button
+                    hidrante_recalque_key = f"hidrante_recalque_{medida.replace(' ', '_')}"
+                    hidrante_recalque = st.radio("Resposta:", ["Sim", "Não"], key=hidrante_recalque_key)
+
+                    st.markdown(
+                        "<span style='color:red'>⚠️ O hidrante de recalque a menos de 20m anula as exigências a respeito do acesso de viaturas na edificação.</span>",
+                        unsafe_allow_html=True
+                    )
+
+                    if hidrante_recalque == "Sim":
                         st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
-                        if hidrante_recalque == "Não":
-                            st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
-    
-                # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
-                elif medida == "Segurança Estrutural contra Incêndio":
-                    with st.expander(f"🔹 {medida}"):
-                        if linha_selecionada.get("EdificacaoTerrea") == "Sim":
+                    else:
+                        st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
+                        st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
+
+
+            # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
+            elif medida == "Segurança Estrutural contra Incêndio":
+                with st.expander(f"🔹 {medida}"):
+                    if linha_selecionada.get("EdificacaoTerrea") == "Sim":
+                        resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                        st.markdown(resposta_trrf)
+                    else:
+                        altura = linha_selecionada.get("Altura", 0)
+                        area = linha_selecionada.get("Area", 0)
+                        subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
+                        numero_subsolos = linha_selecionada.get("NumeroSubsolos", "0")
+                        area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
+
+                        altura_menor_igual_12 = altura <= 12
+                        area_menor_1500 = area < 1500
+                        area_maior_igual_1500 = area >= 1500
+                        subsolo_simples = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
+                        subsolo_complexo = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
+                        sem_subsolo = subsolo_tecnico == "Não"
+
+                        if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
                             resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
                             st.markdown(resposta_trrf)
-                        else:
-                            altura = linha_selecionada.get("Altura", 0)
-                            area = linha_selecionada.get("Area", 0)
-                            subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
-                            numero_subsolos = linha_selecionada.get("NumeroSubsolos", "0")
-                            area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
-    
-                            altura_menor_igual_12 = altura <= 12
-                            area_menor_1500 = area < 1500
-                            area_maior_igual_1500 = area >= 1500
-                            subsolo_simples = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
-                            subsolo_complexo = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
-                            sem_subsolo = subsolo_tecnico == "Não"
-    
-                            if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
-                                resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
-                                st.markdown(resposta_trrf)
-                            elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
-                                resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
-                                st.markdown(resposta_trrf)
-                            elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
-                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
-                                st.markdown(resposta_trrf)
-                            elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
-                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior."
-                                st.markdown(resposta_trrf)
-    
-                            # ✅ Regra 6: Avaliação da cobertura
-                            if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
-                                cobertura_check = st.radio(
-                                    "Algum dos seguintes itens é verdadeiro:\n\nI. A cobertura tem permanência de pessoas ou estoque de algum material?\nII. Faz parte de alguma rota de fuga?\nIII. Seu colapso estrutural compromete a estrutura principal ou paredes externas?",
-                                    ["Não", "Sim"],
-                                    index=0,
-                                    key="cobertura_trrf"
-                                )
-                                if cobertura_check == "Sim":
-                                    st.markdown("⚠️ A cobertura deve ter o mesmo TRRF da estrutura principal.")
-                                else:
-                                    st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
-    
-                        linha_selecionada["ComentarioEstrutural"] = st.text_area(
-                            "Observações sobre segurança estrutural",
-                            value=linha_selecionada.get("ComentarioEstrutural", "")
-                        )
-    
-                # 🔹 Outros tópicos genéricos
-                else:
-                    with st.expander(f"🔹 {medida}"):
-                        st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
-                        if "¹" in aplicacao:
-                            st.markdown("📌 Observação especial: ver nota 1")
-                        elif "²" in aplicacao:
-                            st.markdown("📌 Observação especial: ver nota 2")
-                        elif "³" in aplicacao:
-                            st.markdown("📌 Observação especial: ver nota 3")
-                        elif "⁴" in aplicacao:
-                            st.markdown("📌 Observação especial: ver nota 4")
+                        elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
+                            resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
+                            st.markdown(resposta_trrf)
+                        elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
+                            resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
+                            st.markdown(resposta_trrf)
+                        elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
+                            resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior."
+                            st.markdown(resposta_trrf)
+
+                        # ✅ Regra 6: Avaliação da cobertura
+                        if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
+                            cobertura_check = st.radio(
+                                "Algum dos seguintes itens é verdadeiro:\n\nI. A cobertura tem permanência de pessoas ou estoque de algum material?\nII. Faz parte de alguma rota de fuga?\nIII. Seu colapso estrutural compromete a estrutura principal ou paredes externas?",
+                                ["Não", "Sim"],
+                                index=0,
+                                key="cobertura_trrf" # Usar key único
+                            )
+                            if cobertura_check == "Sim":
+                                st.markdown("⚠️ A cobertura deve ter o mesmo TRRF da estrutura principal.")
+                            else:
+                                st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
+
+                    linha_selecionada["ComentarioEstrutural"] = st.text_area(
+                        "Observações sobre segurança estrutural",
+                        value=linha_selecionada.get("ComentarioEstrutural", "") # Mantém o valor existente
+                    )
+
+
+            # 🔹 Outros tópicos genéricos
+            else:
+                with st.expander(f"🔹 {medida}"):
+                    st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
+                    if "¹" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 1")
+                    elif "²" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 2")
+                    elif "³" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 3")
+                    elif "⁴" in aplicacao:
+                        st.markdown("📌 Observação especial: ver nota 4")
 
 # 📥 Exportação final
-st.markdown("## 📥 Exportar planilha atualizada")
+if mostrar_detalhes and linha_selecionada is not None:
+    st.markdown("## 📥 Exportar planilha atualizada")
 
-if linha_selecionada is not None:
     nova_linha_df = pd.DataFrame([linha_selecionada])
 
     if arquivo and not df.empty:
@@ -356,7 +344,7 @@ if linha_selecionada is not None:
     nome_arquivo_saida = gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada)
 
     output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df_atualizado.to_excel(writer, index=False, sheet_name='Projetos')
     output.seek(0)
 
@@ -365,6 +353,5 @@ if linha_selecionada is not None:
         data=output.getvalue(),
         file_name=nome_arquivo_saida,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        key="download_button_planilha_final"  # ✅ chave única
+        key="download_button_planilha_final"
     )
-
