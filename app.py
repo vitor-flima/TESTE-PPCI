@@ -173,68 +173,67 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
 
 # 💡 Explicação da altura (antes do campo de entrada)
 if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-    if "SubsoloTecnico" not in linha_selecionada:
-        linha_selecionada["SubsoloTecnico"] = "Não"
+    # Garantir que todos os campos existem
+    for campo in ["SubsoloTecnico", "SubsoloComOcupacao", "SubsoloMenor50m2", "DuplexUltimoPavimento"]:
+        if campo not in linha_selecionada:
+            linha_selecionada[campo] = "Não"
+
+    # Definir variáveis seguras
     s1 = linha_selecionada["SubsoloTecnico"]
+    s2 = linha_selecionada["SubsoloComOcupacao"]
+    s3 = linha_selecionada["SubsoloMenor50m2"]
+    duplex = linha_selecionada["DuplexUltimoPavimento"]
 
-if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-    if "SubsoloComOcupacao" not in linha_selecionada:
-        linha_selecionada["SubsoloComOcupacao"] = "Não"
-    s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
+    # Lógica de altura
+    if duplex == "Sim":
+        parte_superior = "Cota do primeiro pavimento do duplex"
+    else:
+        parte_superior = "Cota de piso do último pavimento habitado"
 
-if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-    if "SubsoloMenor50m2" not in linha_selecionada:
-        linha_selecionada["SubsoloMenor50m2"] = "Não"
-    s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
+    if s1 == "Não" and s2 == "Não":
+        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+    elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
+        parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+    else:
+        parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
 
+    explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
+    st.markdown(explicacao)
 
-if duplex == "Sim":
-    parte_superior = "Cota do primeiro pavimento do duplex"
-else:
-    parte_superior = "Cota de piso do último pavimento habitado"
+    # Campo de entrada da altura
+    if "Altura" not in linha_selecionada:
+        linha_selecionada["Altura"] = 3.0
+    linha_selecionada["Altura"] = st.number_input(
+        "Altura da edificação (m)",
+        value=float(linha_selecionada["Altura"])
+    )
 
-if s1 == "Não" and s2 == "Não":
-    parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-elif s1 == "Sim" and s2 == "Sim" and s3 == "Não":
-    parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
-else:
-    parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-
-explicacao = f"💡 Altura da edificação é: {parte_superior} - {parte_inferior}"
-st.markdown(explicacao)
-
-# Campo de entrada da altura
-linha_selecionada["Altura"] = st.number_input("Altura da edificação (m)", value=float(linha_selecionada["Altura"]))
-
-# 🧯 Tabela resumo de medidas de segurança
-faixa = faixa_altura(linha_selecionada["Altura"])
-resumo = medidas_por_faixa(faixa)
-notas = notas_relevantes(resumo, linha_selecionada["Altura"])
-
-st.markdown("### 🔍 Medidas de Segurança Aplicáveis")
-df_resumo = pd.DataFrame.from_dict(resumo, orient='index', columns=["Aplicação"])
-st.table(df_resumo)
-
-# 📌 Notas específicas
-if notas:
-    st.markdown("### 📌 Notas Específicas")
-    for nota in notas:
-        st.markdown(f"- {nota}")
-
-# 🗒️ Comentários do projetista
-st.markdown("### 🗒️ Comentários sobre este tópico")
-linha_selecionada["ComentarioAltura"] = st.text_area("Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis")
-
-# 🔍 Detalhamento por medida de segurança
-if linha_selecionada is not None and "Altura" in linha_selecionada:
+    # 🧯 Tabela resumo de medidas de segurança
     faixa = faixa_altura(linha_selecionada["Altura"])
     resumo = medidas_por_faixa(faixa)
+    notas = notas_relevantes(resumo, linha_selecionada["Altura"])
 
+    st.markdown("### 🔍 Medidas de Segurança Aplicáveis")
+    df_resumo = pd.DataFrame.from_dict(resumo, orient='index', columns=["Aplicação"])
+    st.table(df_resumo)
+
+    # 📌 Notas específicas
+    if notas:
+        st.markdown("### 📌 Notas Específicas")
+        for nota in notas:
+            st.markdown(f"- {nota}")
+
+    # 🗒️ Comentários do projetista
+    st.markdown("### 🗒️ Comentários sobre este tópico")
+    linha_selecionada["ComentarioAltura"] = st.text_area(
+        "Observações, justificativas ou dúvidas sobre altura e medidas aplicáveis",
+        value=linha_selecionada.get("ComentarioAltura", "")
+    )
+
+    # 🔍 Detalhamento por medida de segurança
     st.markdown("## 🧯 Detalhamento por medida de segurança")
-
     for medida, aplicacao in resumo.items():
         if "X" in aplicacao:
-            # 🔹 Tópico específico: Acesso de Viatura na Edificação
             if medida == "Acesso de Viatura na Edificação":
                 with st.expander(f"🔹 {medida}"):
                     st.markdown("**Será previsto hidrante de recalque a não mais que 20m do limite da edificação?**")
@@ -243,13 +242,9 @@ if linha_selecionada is not None and "Altura" in linha_selecionada:
                         "<span style='color:red'>⚠️ O hidrante de recalque a menos de 20m anula as exigências a respeito do acesso de viaturas na edificação.</span>",
                         unsafe_allow_html=True
                     )
-                    if hidrante_recalque == "Sim":
-                        st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
-                    else:
-                        st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
+                    st.markdown("✅ O portão de acesso deve ter, no mínimo, **4m de largura** e **4,5m de altura**.")
+                    if hidrante_recalque == "Não":
                         st.markdown("✅ As vias devem ter, no mínimo, **6m de largura** e **4,5m de altura**, além de suportar viaturas de **25 toneladas em dois eixos**.")
-
-            # 🔹 Outros tópicos genéricos
             else:
                 with st.expander(f"🔹 {medida}"):
                     st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
@@ -262,26 +257,25 @@ if linha_selecionada is not None and "Altura" in linha_selecionada:
                     elif "⁴" in aplicacao:
                         st.markdown("📌 Observação especial: ver nota 4")
 
-    # 📥 Exportação final (fora do loop!)
+    # 📥 Exportação final
     st.markdown("## 📥 Exportar planilha atualizada")
-    if linha_selecionada is not None:
-        nova_linha_df = pd.DataFrame([linha_selecionada])
-        if arquivo and not df.empty:
-            df_atualizado = pd.concat([df, nova_linha_df], ignore_index=True)
-        else:
-            df_atualizado = nova_linha_df
+    nova_linha_df = pd.DataFrame([linha_selecionada])
+    if arquivo and not df.empty:
+        df_atualizado = pd.concat([df, nova_linha_df], ignore_index=True)
+    else:
+        df_atualizado = nova_linha_df
 
-        nome_arquivo_saida = gerar_nome_arquivo(linha_selecionada["NomeProjeto"], nome_arquivo_entrada)
+    nome_arquivo_saida = gerar_nome_arquivo(linha_selecionada["NomeProjeto"], nome_arquivo_entrada)
 
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_atualizado.to_excel(writer, index=False, sheet_name='Projetos')
-        output.seek(0)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_atualizado.to_excel(writer, index=False, sheet_name='Projetos')
+    output.seek(0)
 
-        st.download_button(
-            label="Baixar Planilha Atualizada",
-            data=output.getvalue(),
-            file_name=nome_arquivo_saida,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            key="download_button_final"
-        )
+    st.download_button(
+        label="Baixar Planilha Atualizada",
+        data=output.getvalue(),
+        file_name=nome_arquivo_saida,
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_button_final"
+    )
