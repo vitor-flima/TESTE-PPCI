@@ -84,6 +84,7 @@ if modo == "📄 Revisar projeto existente":
                 linha_selecionada = df.loc[0].copy()
             if isinstance(linha_selecionada, pd.DataFrame):
                 linha_selecionada = linha_selecionada.iloc[0]
+            mostrar_campos = True  # ✅ só ativa se tudo deu certo
         except Exception as e:
             st.error(f"Erro ao ler a planilha: {e}")
 
