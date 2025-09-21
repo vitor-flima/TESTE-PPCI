@@ -118,58 +118,67 @@ if linha_selecionada is not None:
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
 
     # 🧱 Enquadramento da edificação A-2
-    st.markdown("### 🧱 Enquadramento da edificação A-2")
-    linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada.get("Area", 100.0)))
+st.markdown("### 🧱 Enquadramento da edificação A-2")
+linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", value=float(linha_selecionada.get("Area", 100.0)))
 
-    st.markdown("### 🏗️ Altura da edificação")
-    # Subsolo
-    linha_selecionada["SubsoloTecnico"] = st.radio(
-    "Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?",
-    ["Não", "Sim"]
+# ✅ Novo campo: edificação térrea
+linha_selecionada["EdificacaoTerrea"] = st.radio(
+    "A edificação é térrea?",
+    ["Não", "Sim"],
+    index=0
 )
 
-if linha_selecionada is not None and "SubsoloTecnico" in linha_selecionada and linha_selecionada["SubsoloTecnico"] == "Sim":
-    st.markdown(
-        "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
-        unsafe_allow_html=True
-    )
+st.markdown("### 🏗️ Altura da edificação")
 
-    linha_selecionada["NumeroSubsolos"] = st.radio(
-        "Qual a quantidade de subsolo?",
-        ["1", "Mais de 1"]
-    )
-
-    if linha_selecionada["NumeroSubsolos"] == "1":
-        linha_selecionada["AreaSubsolo"] = st.selectbox(
-            "Área do subsolo:",
-            ["Menor que 500m²", "Maior que 500m²"]
-        )
-
-    linha_selecionada["SubsoloComOcupacao"] = st.radio(
-        "Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?",
+# Subsolo — só aparece se NÃO for térrea
+if linha_selecionada["EdificacaoTerrea"] == "Não":
+    linha_selecionada["SubsoloTecnico"] = st.radio(
+        "Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?",
         ["Não", "Sim"]
     )
-    if linha_selecionada["SubsoloComOcupacao"] == "Sim":
-        linha_selecionada["SubsoloMenor50m2"] = st.radio(
-            "Essa ocupação secundária tem no máximo 50m² em cada subsolo?",
+
+    if linha_selecionada["SubsoloTecnico"] == "Sim":
+        st.markdown(
+            "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
+            unsafe_allow_html=True
+        )
+
+        linha_selecionada["NumeroSubsolos"] = st.radio(
+            "Qual a quantidade de subsolo?",
+            ["1", "Mais de 1"]
+        )
+
+        if linha_selecionada["NumeroSubsolos"] == "1":
+            linha_selecionada["AreaSubsolo"] = st.selectbox(
+                "Área do subsolo:",
+                ["Menor que 500m²", "Maior que 500m²"]
+            )
+
+        linha_selecionada["SubsoloComOcupacao"] = st.radio(
+            "Um dos dois primeiros subsolos abaixo do térreo possui ocupação secundária?",
+            ["Não", "Sim"]
+        )
+        if linha_selecionada["SubsoloComOcupacao"] == "Sim":
+            linha_selecionada["SubsoloMenor50m2"] = st.radio(
+                "Essa ocupação secundária tem no máximo 50m² em cada subsolo?",
+                ["Não", "Sim"]
+            )
+
+# ✅ Campos sempre visíveis — fora do bloco de subsolo
+if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+    if linha_selecionada["EdificacaoTerrea"] == "Não":
+        linha_selecionada["DuplexUltimoPavimento"] = st.radio(
+            "Existe duplex no último pavimento?",
             ["Não", "Sim"]
         )
 
-# ✅ Sempre visíveis — fora do bloco de subsolo
-if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-    linha_selecionada["DuplexUltimoPavimento"] = st.radio(
-        "Existe duplex no último pavimento?",
-        ["Não", "Sim"]
-    )
+        if "AticoOuCasaMaquinas" not in linha_selecionada:
+            linha_selecionada["AticoOuCasaMaquinas"] = ""
 
-if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
-    if "AticoOuCasaMaquinas" not in linha_selecionada:
-        linha_selecionada["AticoOuCasaMaquinas"] = ""
-
-    linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
-        "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
-        ["Não", "Sim"]
-    )
+        linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio(
+            "Há pavimento de ático/casa de máquinas/casa de bombas acima do último pavimento?",
+            ["Não", "Sim"]
+        )
 
 # 💡 Explicação da altura (antes do campo de entrada)
 if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
@@ -207,6 +216,7 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
         "Altura da edificação (m)",
         value=float(linha_selecionada["Altura"])
     )
+
 
     # 🧯 Tabela resumo de medidas de segurança
     faixa = faixa_altura(linha_selecionada["Altura"])
