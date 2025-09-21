@@ -177,7 +177,11 @@ if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Ser
         linha_selecionada["SubsoloTecnico"] = "Não"
     s1 = linha_selecionada["SubsoloTecnico"]
 
-s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
+if linha_selecionada is not None and isinstance(linha_selecionada, (dict, pd.Series)):
+    if "SubsoloComOcupacao" not in linha_selecionada:
+        linha_selecionada["SubsoloComOcupacao"] = "Não"
+    s2 = linha_selecionada.get("SubsoloComOcupacao", "Não")
+
 s3 = linha_selecionada.get("SubsoloMenor50m2", "Não")
 duplex = linha_selecionada["DuplexUltimoPavimento"]
 
