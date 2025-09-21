@@ -70,6 +70,66 @@ nome_arquivo_entrada = None
 linha_selecionada = None
 mostrar_campos = False  # ✅ controle de exibição
 
+import streamlit as st
+import pandas as pd
+import io
+import re
+from datetime import datetime
+
+st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
+st.title("📁 Ferramenta de Projetos PPCI")
+
+# Funções auxiliares
+def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
+    if nome_arquivo_entrada:
+        match = re.search(r"-R(\d+)", nome_arquivo_entrada)
+        numero = int(match.group(1)) + 1 if match else 1
+        novo_nome = re.sub(r"-R\d+", f"-R{numero:02}", nome_arquivo_entrada)
+    else:
+        novo_nome = f"checklistINC_{nome_projeto}-R00.xlsx"
+    return novo_nome
+
+def faixa_altura(h):
+    if h == 0:
+        return "Térrea"
+    elif h < 6:
+        return "H < 6 m"
+    elif h < 12:
+        return "6 ≤ H < 12 m"
+    elif h < 23:
+        return "12 ≤ H < 23 m"
+    elif h < 30:
+        return "23 ≤ H < 30 m"
+    else:
+        return "Acima de 30 m"
+
+def medidas_por_faixa(faixa):
+    tabela = {
+        "Acesso de Viatura na Edificação": ["X"] * 6,
+        "Segurança Estrutural contra Incêndio": ["X"] * 6,
+        "Compartimentação Horizontal ou de Área": ["X⁴"] * 6,
+        "Compartimentação de Verticais": ["", "", "", "X²", "X²", "X²"],
+        "Controle de Materiais de Acabamento": ["", "", "", "X", "X", "X"],
+        "Saídas de Emergência": ["X", "X", "X", "X", "X", "X¹"],
+        "Brigada de Incêndio": ["X"] * 6,
+        "Iluminação de Emergência": ["X"] * 6,
+        "Alarme de Incêndio": ["X³", "X³", "X³", "X³", "X³", "X"],
+        "Sinalização de Emergência": ["X"] * 6,
+        "Extintores": ["X"] * 6,
+        "Hidrantes e Mangotinhos": ["X"] * 6
+    }
+    faixas = ["Térrea", "H < 6 m", "6 ≤ H < 12 m", "12 ≤ H < 23 m", "23 ≤ H < 30 m", "Acima de 30 m"]
+    idx = faixas.index(faixa)
+    return {medida: tabela[medida][idx] for medida in tabela}
+
+# Interface principal
+modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
+df = pd.DataFrame()
+arquivo = None
+nome_arquivo_entrada = None
+linha_selecionada = None
+mostrar_campos = False  # ✅ controle de exibição
+
 # Revisar projeto existente
 if modo == "📄 Revisar projeto existente":
     arquivo = st.file_uploader("Anexe a planilha do projeto (.xlsx)", type=["xlsx"])
@@ -86,7 +146,7 @@ if modo == "📄 Revisar projeto existente":
                 linha_selecionada = df.loc[0].copy()
             if isinstance(linha_selecionada, pd.DataFrame):
                 linha_selecionada = linha_selecionada.iloc[0]
-            mostrar_campos = True  # ✅ só ativa se tudo deu certo
+            mostrar_campos = True
         except Exception as e:
             st.error(f"Erro ao ler a planilha: {e}")
 
@@ -120,6 +180,30 @@ if mostrar_campos:
         qtd_anexos = st.number_input("Selecione a quantidade de anexos", min_value=1, max_value=5, step=1)
         for i in range(1, 6):
             linha_selecionada[f"Anexo{i}"] = st.text_input(f"Insira o nome do anexo {i}") if i <= qtd_anexos else ""
+
+    st.markdown("### 📐 Enquadramento da Edificação")
+    linha_selecionada["Area"] = st.number_input("Área da edificação A-2 (m²)", min_value=0.0, value=linha_selecionada.get("Area", 0.0), step=10.0)
+    linha_selecionada["SubsoloTecnico"] = st.radio("Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?", ["Não", "Sim"], index=0 if linha_selecionada.get("SubsoloTecnico") == "Não" else 1)
+    linha_selecionada["DuplexUltimoPavimento"] = st.radio("Existe mezanino no último pavimento?", ["Não", "Sim"], index=0 if linha_selecionada.get("DuplexUltimoPavimento") == "Não" else 1)
+    linha_selecionada["ÁticoOuCasaMaquinas"] = st.radio("A edificação possui pavimento com máquinas e casa de bombas acima do último pavimento?", ["Não", "Sim"], index=0 if linha_selecionada.get("ÁticoOuCasaMaquinas") == "Não" else 1)
+    linha_selecionada["Altura"] = st.number_input("Altura da edificação é: Cota de piso do último pavimento habitado - cota de piso do pavimento mais baixo, exceto subsolo", min_value=0.0, value=linha_selecionada.get("Altura", 0.0), step=0.5)
+
+    st.markdown("### ✅ Medidas de Segurança Aplicáveis")
+    faixa = faixa_altura(linha_selecionada.get("Altura", 0))
+    resumo = medidas_por_faixa(faixa)
+    for medida, aplicacao in resumo.items():
+        if "X" in aplicacao:
+            st.checkbox(medida, value=True, disabled=True)
+
+    st.markdown("### 📤 Exportar Projeto")
+    if linha_selecionada is not None:
+        nova_linha_df = pd.DataFrame([linha_selecionada])
+        if arquivo is not None and not df.empty:
+            df_atualizado = pd.concat([df, nova_linha_df], ignore_index=True)
+        else:
+            df_atualizado = nova_linha_df
+        nome_projeto = linha_selecionada.get("NomeProjeto", "ProjetoSemNome")
+        nome_arquivo_saida = gerar_nome_arquivo
 
 # 🧱 Enquadramento da edificação A-2
 st.markdown("### 🧱 Enquadramento da edificação A-2")
