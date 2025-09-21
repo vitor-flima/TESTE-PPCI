@@ -120,7 +120,7 @@ if linha_selecionada is not None:
 
     st.markdown("### 🏗️ Altura da edificação")
     # Subsolo
-linha_selecionada["SubsoloTecnico"] = st.radio(
+    linha_selecionada["SubsoloTecnico"] = st.radio(
     "Existe subsolo de estacionamento, área técnica ou sem ocupação de pessoas?",
     ["Não", "Sim"]
 )
