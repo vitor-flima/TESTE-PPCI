@@ -277,6 +277,8 @@ if mostrar_campos:
                 # 🔹 Tópico específico: Segurança Estrutural contra Incêndio
                 elif medida == "Segurança Estrutural contra Incêndio":
                     with st.expander(f"🔹 {medida}"):
+                        mostrar_trrf_adotado = False  # controle para exibir campo de TRRF adotado
+                
                         if linha_selecionada.get("EdificacaoTerrea") == "Sim":
                             resposta_estrutura_terrea = st.radio(
                                 "Há algum elemento estrutural que seu colapso comprometa a estabilidade de elementos de compartimentação ou isolamento?",
@@ -288,6 +290,7 @@ if mostrar_campos:
                                     "<span style='color:red'>⚠️ A edificação deve comprovar TRRF de 30min para elementos estruturais.</span>",
                                     unsafe_allow_html=True
                                 )
+                                mostrar_trrf_adotado = True
                             else:
                                 st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
                         else:
@@ -310,12 +313,15 @@ if mostrar_campos:
                             elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
                                 resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
                                 st.markdown(resposta_trrf)
+                                mostrar_trrf_adotado = True
                             elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
                                 resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
                                 st.markdown(resposta_trrf)
+                                mostrar_trrf_adotado = True
                             elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
                                 resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior."
                                 st.markdown(resposta_trrf)
+                                mostrar_trrf_adotado = True
                 
                             # ✅ Regra 6: Avaliação da cobertura
                             if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
@@ -330,6 +336,15 @@ if mostrar_campos:
                                 else:
                                     st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
                 
+                        # 📝 Campo TRRF adotado — aparece apenas se necessário
+                        if mostrar_trrf_adotado:
+                            # st.image("caminho/para/imagem.png", caption="Esquema TRRF", use_column_width=True)  # imagem futura
+                            linha_selecionada["TRRFAdotado"] = st.text_area(
+                                "TRRF adotado: Descreva os TRRFs para os diferentes pavimentos da edificação",
+                                value=linha_selecionada.get("TRRFAdotado", "")
+                            )
+                
+                        # 🗒️ Comentário final do projetista
                         linha_selecionada["ComentarioEstrutural"] = st.text_area(
                             "Observações sobre segurança estrutural",
                             value=linha_selecionada.get("ComentarioEstrutural", "")
