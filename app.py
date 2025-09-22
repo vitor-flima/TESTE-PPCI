@@ -278,22 +278,32 @@ if mostrar_campos:
                 elif medida == "Segurança Estrutural contra Incêndio":
                     with st.expander(f"🔹 {medida}"):
                         if linha_selecionada.get("EdificacaoTerrea") == "Sim":
-                            resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
-                            st.markdown(resposta_trrf)
+                            resposta_estrutura_terrea = st.radio(
+                                "Há algum elemento estrutural que seu colapso comprometa a estabilidade de elementos de compartimentação ou isolamento?",
+                                ["Não", "Sim"],
+                                key="estrutura_terrea"
+                            )
+                            if resposta_estrutura_terrea == "Sim":
+                                st.markdown(
+                                    "<span style='color:red'>⚠️ A edificação deve comprovar TRRF de 30min para elementos estruturais.</span>",
+                                    unsafe_allow_html=True
+                                )
+                            else:
+                                st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
                         else:
                             altura = linha_selecionada.get("Altura", 0)
                             area = linha_selecionada.get("Area", 0)
                             subsolo_tecnico = linha_selecionada.get("SubsoloTecnico", "Não")
                             numero_subsolos = linha_selecionada.get("NumeroSubsolos", "0")
                             area_subsolo = linha_selecionada.get("AreaSubsolo", "Menor que 500m²")
-
+                
                             altura_menor_igual_12 = altura <= 12
                             area_menor_1500 = area < 1500
                             area_maior_igual_1500 = area >= 1500
                             subsolo_simples = numero_subsolos == "1" and area_subsolo == "Menor que 500m²"
                             subsolo_complexo = numero_subsolos != "1" or area_subsolo == "Maior que 500m²"
                             sem_subsolo = subsolo_tecnico == "Não"
-
+                
                             if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
                                 resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
                                 st.markdown(resposta_trrf)
@@ -301,12 +311,12 @@ if mostrar_campos:
                                 resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
                                 st.markdown(resposta_trrf)
                             elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
-                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
+                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
                                 st.markdown(resposta_trrf)
                             elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
-                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determino de acordo com seu uso e nunca inferior ao do pavimento superior."
+                                resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior."
                                 st.markdown(resposta_trrf)
-
+                
                             # ✅ Regra 6: Avaliação da cobertura
                             if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
                                 cobertura_check = st.radio(
@@ -319,7 +329,7 @@ if mostrar_campos:
                                     st.markdown("⚠️ A cobertura deve ter o mesmo TRRF da estrutura principal.")
                                 else:
                                     st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
-
+                
                         linha_selecionada["ComentarioEstrutural"] = st.text_area(
                             "Observações sobre segurança estrutural",
                             value=linha_selecionada.get("ComentarioEstrutural", "")
