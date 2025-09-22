@@ -278,6 +278,7 @@ if mostrar_campos:
                 elif medida == "Segurança Estrutural contra Incêndio":
                     with st.expander(f"🔹 {medida}"):
                         mostrar_trrf_adotado = False  # controle para exibir campo de TRRF adotado
+                        resposta_trrf = ""  # inicializa a resposta
                 
                         if linha_selecionada.get("EdificacaoTerrea") == "Sim":
                             resposta_estrutura_terrea = st.radio(
@@ -286,13 +287,12 @@ if mostrar_campos:
                                 key="estrutura_terrea"
                             )
                             if resposta_estrutura_terrea == "Sim":
-                                st.markdown(
-                                    "<span style='color:red'>⚠️ A edificação deve comprovar TRRF de 30min para elementos estruturais.</span>",
-                                    unsafe_allow_html=True
-                                )
+                                resposta_trrf = "⚠️ A edificação deve comprovar TRRF de 30min para elementos estruturais."
+                                st.markdown(f"<span style='color:red'>{resposta_trrf}</span>", unsafe_allow_html=True)
                                 mostrar_trrf_adotado = True
                             else:
-                                st.markdown("✅ A edificação está isenta de comprovação de TRRF para elementos estruturais.")
+                                resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
+                                st.markdown(resposta_trrf)
                         else:
                             altura = linha_selecionada.get("Altura", 0)
                             area = linha_selecionada.get("Area", 0)
@@ -309,19 +309,17 @@ if mostrar_campos:
                 
                             if altura_menor_igual_12 and area_menor_1500 and (sem_subsolo or subsolo_simples):
                                 resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
-                                st.markdown(resposta_trrf)
                             elif altura_menor_igual_12 and area_menor_1500 and subsolo_complexo:
                                 resposta_trrf = "⚠️ Apenas o(s) subsolo(s) deverão apresentar comprovação de TRRF para elementos estruturais."
-                                st.markdown(resposta_trrf)
                                 mostrar_trrf_adotado = True
                             elif (altura > 12 or area_maior_igual_1500) and (sem_subsolo or subsolo_simples):
                                 resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior (o subsolo absorve o TRRF do pavimento superior)."
-                                st.markdown(resposta_trrf)
                                 mostrar_trrf_adotado = True
                             elif (altura > 12 or area_maior_igual_1500) and subsolo_complexo:
                                 resposta_trrf = "⚠️ Cada pavimento deverá apresentar comprovação de TRRF para elementos estruturais. Cada pavimento tem seu TRRF determinado de acordo com seu uso e nunca inferior ao do pavimento superior."
-                                st.markdown(resposta_trrf)
                                 mostrar_trrf_adotado = True
+                
+                            st.markdown(resposta_trrf)
                 
                             # ✅ Regra 6: Avaliação da cobertura
                             if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf:
@@ -336,7 +334,7 @@ if mostrar_campos:
                                 else:
                                     st.markdown("✅ A cobertura está isenta de comprovação de TRRF para os elementos estruturais.")
                 
-                        # 📝 Campo TRRF adotado — aparece apenas se necessário
+                        # 📝 Campo TRRF adotado — aparece antes dos comentários
                         if mostrar_trrf_adotado:
                             # st.image("caminho/para/imagem.png", caption="Esquema TRRF", use_column_width=True)  # imagem futura
                             linha_selecionada["TRRFAdotado"] = st.text_area(
