@@ -341,11 +341,7 @@ if mostrar_campos:
                                 "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf
                                 or "subsolo(s) deverão apresentar comprovação de TRRF" in resposta_trrf
                             ):
-                                st.image(
-                                    "imagens/Tempos requeridos de resistência ao fogo.png",
-                                    caption="Tabela de tempos requeridos de resistência ao fogo",
-                                    use_column_width=True
-                                )
+                                st.image("imagens/Tempos requeridos de resistência ao fogo.png", use_container_width=True)
                 
                             linha_selecionada["TRRFAdotado"] = st.text_area(
                                 "TRRF adotado: Descreva os TRRFs para os diferentes pavimentos da edificação",
