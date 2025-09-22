@@ -336,7 +336,17 @@ if mostrar_campos:
                 
                         # 📝 Campo TRRF adotado — aparece antes dos comentários
                         if mostrar_trrf_adotado:
-                            # st.image("caminho/para/imagem.png", caption="Esquema TRRF", use_column_width=True)  # imagem futura
+                            # 🔍 Exibe imagem condicionalmente com base na resposta
+                            if (
+                                "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf
+                                or "subsolo(s) deverão apresentar comprovação de TRRF" in resposta_trrf
+                            ):
+                                st.image(
+                                    "imagens/Tempos requeridos de resistência ao fogo.png",
+                                    caption="Tabela de tempos requeridos de resistência ao fogo",
+                                    use_column_width=True
+                                )
+                
                             linha_selecionada["TRRFAdotado"] = st.text_area(
                                 "TRRF adotado: Descreva os TRRFs para os diferentes pavimentos da edificação",
                                 value=linha_selecionada.get("TRRFAdotado", "")
