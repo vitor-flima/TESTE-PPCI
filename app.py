@@ -123,4 +123,64 @@ if mostrar_campos:
     st.markdown("As medidas de segurança podem ser determinadas individualmente para cada edificação, desde que estejam isoladas. Caso contrário, são consideradas como um único edifício.")
 
     # Torres residenciais
-    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step
+    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1)
+    torres = []
+    
+    for i in range(int(num_torres)):
+        st.markdown(f"**Edificação Residencial {i+1}**")
+        nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
+        area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}")
+        terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
+    
+        if terrea == "Não":
+            um_ap_por_pav = st.radio(f"A edificação {i+1} é de um apartamento por pavimento?", ["Sim", "Não"], key=f"ap_por_pav_{i}")
+    
+            subsolo_tecnico = st.radio(
+                f"Existe subsolo na edificação {i+1}?",
+                ["Não", "Sim"], key=f"subsolo_tecnico_{i}"
+            )
+    
+            if subsolo_tecnico == "Sim":
+                st.markdown(
+                    "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
+                    unsafe_allow_html=True
+                )
+    
+                numero_subsolos = st.radio(
+                    f"Quantidade de subsolos na edificação {i+1}",
+                    ["1", "Mais de 1"], key=f"numero_subsolos_{i}"
+                )
+    
+                if numero_subsolos == "1":
+                    area_subsolo = st.selectbox(
+                        f"Área do subsolo da edificação {i+1}",
+                        ["Menor que 500m²", "Maior que 500m²"], key=f"area_subsolo_{i}"
+                    )
+                else:
+                    area_subsolo = "Maior que 500m²"
+    
+                subsolo_ocupado = st.radio(
+                    f"Algum dos dois primeiros subsolos possui ocupação secundária?",
+                    ["Não", "Sim"], key=f"subsolo_ocupado_{i}"
+                )
+    
+                if subsolo_ocupado == "Sim":
+                    subsolo_menor_50 = st.radio(
+                        f"A ocupação secundária tem no máximo 50m² em cada subsolo?",
+                        ["Não", "Sim"], key=f"subsolo_menor_50_{i}"
+                    )
+                else:
+                    subsolo_menor_50 = "Não"
+            else:
+                numero_subsolos = "0"
+                area_subsolo = "Menor que 500m²"
+                subsolo_ocupado = "Não"
+                subsolo_menor_50 = "Não"
+    
+            duplex = st.radio(
+                f"Existe duplex no último pavimento da edificação {i+1}?",
+                ["Não", "Sim"], key=f"duplex_{i}"
+            )
+    
+            atico = st.radio(
+                f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
