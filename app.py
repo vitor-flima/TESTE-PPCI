@@ -335,15 +335,22 @@ if mostrar_campos:
             altura_fachada_edf2 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf2", value=0.0)
             
             area_fachada_calculada_edf2 = largura_fachada_edf2 * altura_fachada_edf2
-            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf2:.2f}", key="edf2_area_metric")
+            st.markdown(f"#### Porcentagem de abertura de {edf1_data['nome']}")
+            largura_fachada_edf1 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf1", value=0.0)
+            altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf1", value=0.0)
             
-            area_abertura_edf2 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf2", value=0.0)
-
-            porcentagem_abertura_edf2 = 0
-            if area_fachada_calculada_edf2 > 0:
-                porcentagem_abertura_edf2 = (area_abertura_edf2 / area_fachada_calculada_edf2) * 100
+            area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
+            area_fachada_formatada = f"{area_fachada_calculada_edf1:.2f}"
+            st.metric(label="Área da fachada considerada (m²)", value=area_fachada_formatada)
             
-            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura_edf2:.2f} %", key="edf2_metric")
+            area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf1", value=0.0)
+            
+            porcentagem_abertura = 0
+            if area_fachada_calculada_edf1 > 0:
+                porcentagem_abertura = (area_abertura_edf1 / area_fachada_calculada_edf1) * 100
+            
+            porcentagem_formatada = f"{porcentagem_abertura:.2f} %"
+            st.metric(label="Porcentagem de abertura", value=porcentagem_formatada)
 
             # Pergunta do bombeiro
             st.markdown("---")
