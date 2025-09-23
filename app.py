@@ -90,33 +90,4 @@ if modo == "📄 Revisar projeto existente":
             if isinstance(linha_selecionada, pd.DataFrame):
                 linha_selecionada = linha_selecionada.iloc[0]
             mostrar_campos = True
-        except Exception as e:
-            st.error(f"Erro ao ler a planilha: {e}")
-
-elif modo == "🆕 Criar novo projeto":
-    linha_selecionada = pd.Series({
-        "NomeProjeto": "",
-        "Ocupacao": "A-2",
-        "Area": 100.0,
-        "Altura": 3.0,
-        "UltimoUsuario": "",
-        "UltimaModificacao": datetime.now().strftime('%d/%m/%Y %H:%M'),
-        "ComentarioAltura": ""
-    })
-    st.success("Novo projeto iniciado. Preencha os dados abaixo.")
-    mostrar_campos = True
-
-# 🏗️ Levantamento das edificações
-if mostrar_campos:
-    st.markdown("### 🧾 Versão do Projeto")
-    linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada.get("NomeProjeto", ""))
-    nome_usuario = st.text_input("Seu nome", value="Vitor")
-    linha_selecionada["UltimoUsuario"] = f"{nome_usuario} + Copilot"
-    linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
-
-    # 🔻 Separação visual destacada
-    st.markdown("---")
-    st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
-
-    # 🏢 Novo título atualizado
-    st.markdown("### 🏢 Levantamento das Edificações do Empreendimento para Distâncias de Isol
+        except
