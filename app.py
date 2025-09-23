@@ -135,16 +135,99 @@ if mostrar_campos:
 
         if terrea == "Não":
             um_ap_por_pav = st.radio(f"A edificação {i+1} é de um apartamento por pavimento?", ["Sim", "Não"], key=f"ap_por_pav_{i}")
+
+            subsolo_tecnico = st.radio(
+                f"Existe subsolo técnico na edificação {i+1}?",
+                ["Não", "Sim"], key=f"subsolo_tecnico_{i}"
+            )
+
+            if subsolo_tecnico == "Sim":
+                st.markdown(
+                    "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
+                    unsafe_allow_html=True
+                )
+
+                numero_subsolos = st.radio(
+                    f"Quantidade de subsolos na edificação {i+1}",
+                    ["1", "Mais de 1"], key=f"numero_subsolos_{i}"
+                )
+
+                if numero_subsolos == "1":
+                    area_subsolo = st.selectbox(
+                        f"Área do subsolo da edificação {i+1}",
+                        ["Menor que 500m²", "Maior que 500m²"], key=f"area_subsolo_{i}"
+                    )
+                else:
+                    area_subsolo = "Maior que 500m²"
+
+                subsolo_ocupado = st.radio(
+                    f"Algum dos dois primeiros subsolos possui ocupação secundária?",
+                    ["Não", "Sim"], key=f"subsolo_ocupado_{i}"
+                )
+
+                if subsolo_ocupado == "Sim":
+                    subsolo_menor_50 = st.radio(
+                        f"A ocupação secundária tem no máximo 50m² em cada subsolo?",
+                        ["Não", "Sim"], key=f"subsolo_menor_50_{i}"
+                    )
+                else:
+                    subsolo_menor_50 = "Não"
+            else:
+                numero_subsolos = "0"
+                area_subsolo = "Menor que 500m²"
+                subsolo_ocupado = "Não"
+                subsolo_menor_50 = "Não"
+
+            duplex = st.radio(
+                f"Existe duplex no último pavimento da edificação {i+1}?",
+                ["Não", "Sim"], key=f"duplex_{i}"
+            )
+
+            atico = st.radio(
+                f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
+                ["Não", "Sim"], key=f"atico_{i}"
+            )
+
+            # 🔍 Explicação da altura
+            if duplex == "Sim":
+                parte_superior = "Cota do primeiro pavimento do duplex"
+            else:
+                parte_superior = "Cota de piso do último pavimento habitado"
+
+            if subsolo_tecnico == "Não" and subsolo_ocupado == "Não":
+                parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+            elif subsolo_tecnico == "Sim" and subsolo_ocupado == "Sim" and subsolo_menor_50 == "Não":
+                parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+            else:
+                parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+
+            st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
+
         else:
             um_ap_por_pav = None
+            subsolo_tecnico = "Não"
+            numero_subsolos = "0"
+            area_subsolo = "Menor que 500m²"
+            subsolo_ocupado = "Não"
+            subsolo_menor_50 = "Não"
+            duplex = "Não"
+            atico = "Não"
 
         torres.append({
             "nome": nome,
             "area": area,
             "altura": altura,
             "terrea": terrea,
-            "um_ap_por_pav": um_ap_por_pav
+            "um_ap_por_pav": um_ap_por_pav,
+            "subsolo_tecnico": subsolo_tecnico,
+            "numero_subsolos": numero_subsolos,
+            "area_subsolo": area_subsolo,
+            "subsolo_ocupado": subsolo_ocupado,
+            "subsolo_menor_50": subsolo_menor_50,
+            "duplex": duplex,
+            "atico": atico
         })
+
 
     # Anexos
     st.markdown("### 📎 Anexos do Projeto")
