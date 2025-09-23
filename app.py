@@ -168,19 +168,3 @@ if mostrar_campos:
                     subsolo_menor_50 = st.radio(
                         f"A ocupação secundária tem no máximo 50m² em cada subsolo?",
                         ["Não", "Sim"], key=f"subsolo_menor_50_{i}"
-                    )
-                else:
-                    subsolo_menor_50 = "Não"
-            else:
-                numero_subsolos = "0"
-                area_subsolo = "Menor que 500m²"
-                subsolo_ocupado = "Não"
-                subsolo_menor_50 = "Não"
-    
-            duplex = st.radio(
-                f"Existe duplex no último pavimento da edificação {i+1}?",
-                ["Não", "Sim"], key=f"duplex_{i}"
-            )
-    
-            atico = st.radio(
-                f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
