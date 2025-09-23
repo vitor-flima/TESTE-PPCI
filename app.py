@@ -203,4 +203,174 @@ if mostrar_campos:
             st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
     
             # 🔢 Campo de entrada da altura — só aparece se não for térrea
-            altura = st
+            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}")
+    
+        else:
+            um_ap_por_pav = None
+            subsolo_tecnico = "Não"
+            numero_subsolos = "0"
+            area_subsolo = "Menor que 500m²"
+            subsolo_ocupado = "Não"
+            subsolo_menor_50 = "Não"
+            duplex = "Não"
+            atico = "Não"
+            altura = 0.0  # valor fixo para térrea
+    
+        torres.append({
+            "nome": nome,
+            "area": area,
+            "altura": altura,
+            "terrea": terrea,
+            "um_ap_por_pav": um_ap_por_pav,
+            "subsolo_tecnico": subsolo_tecnico,
+            "numero_subsolos": numero_subsolos,
+            "area_subsolo": area_subsolo,
+            "subsolo_ocupado": subsolo_ocupado,
+            "subsolo_menor_50": subsolo_menor_50,
+            "duplex": duplex,
+            "atico": atico
+        })
+
+    # 📎 Anexos do Projeto
+    st.markdown("### 📎 Anexos do Projeto")
+    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1)
+    anexos = []
+    
+    # 🔽 Lista de opções de uso/ocupação
+    opcoes_uso_anexo = [
+        "C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros",
+        "F-6; Clube social e Salão de Festa; Buffets, clubes sociais, bingo, bilhares, tiro ao alvo, boliche",
+        "F-8; Local para refeição; Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas",
+        "G-1; Garagem sem acesso de público e sem abastecimento; Garagens automáticas, com manobristas",
+        "G-2; Garagem com acesso de público e sem abastecimento; Garagens coletivas sem automação",
+        "J-2; Depósito de lixo; Carga geral do decreto de 300 MJ/m²"
+    ]
+    
+    # 🔽 Lista de opções de carga de incêndio
+    opcoes_carga_incendio = [
+        "C-1; Comércio varejista de alimentos; Minimercados, mercearias, armazéns — 300 MJ/m²",
+        "F-8; Cantinas privativas; Serviços de alimentação — 300 MJ/m²",
+        "F-6; Recreação e lazer não especificados; Atividades diversas — 600 MJ/m²",
+        "G-1/G-2; Estacionamento de veículos; Garagens automáticas ou coletivas — 300 MJ/m²",
+        "J-2; Depósito de lixo; Carga geral do decreto — 300 MJ/m²"
+    ]
+    
+    for i in range(int(num_anexos)):
+        st.markdown(f"**Anexo {i+1}**")
+        nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
+        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}")
+        
+        uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
+        carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
+        
+        anexos.append({
+            "nome": nome,
+            "area": area,
+            "uso": uso,
+            "carga_incendio": carga,
+            "terrea": "Sim",  # todos os anexos são considerados térreos
+            "um_ap_por_pav": None,
+            "altura": 0.0  # altura fixa para anexos
+        })
+        
+    st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
+    
+    # 🔀 Bloco de Comparação entre Edificações
+    todas_edificacoes = torres + anexos
+    if len(todas_edificacoes) > 1:
+        nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
+    
+        st.markdown("---")
+        st.markdown("### 🔀 Comparação entre Edificações")
+    
+        def fachada_edificacao(edf):
+            if "um_ap_por_pav" in edf and edf["um_ap_por_pav"] == "Sim":
+                return "toda a fachada do pavimento"
+            elif "terrea" in edf and edf["terrea"] == "Sim":
+                return "toda a fachada do edifício"
+            elif "altura" in edf and "area" in edf:
+                if edf["area"] <= 750 and edf["altura"] < 12:
+                    return "toda a área da fachada"
+                elif edf["area"] > 750 and edf["altura"] < 12:
+                    return "fachada da área do maior compartimento"
+                elif edf["area"] > 750 and edf["altura"] >= 12:
+                    return "fachada da área do maior compartimento"
+                else:
+                    return "toda a área da fachada"
+            else:
+                return "toda a fachada do edifício"
+    
+        # Comparação inicial
+        edf1 = st.selectbox("Selecione a Edificação 1:", nomes_edificacoes, key="comparacao_edf1_main")
+        edf2 = st.selectbox("Selecione a Edificação 2:", [n for n in nomes_edificacoes if n != edf1], key="comparacao_edf2_main")
+    
+        edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1), None)
+        edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2), None)
+    
+        if edf1_data and edf2_data:
+            st.markdown(f"**Fachada a usar na comparação (de {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
+            
+            st.markdown(f"#### Porcentagem de abertura de {edf1_data['nome']}")
+            largura_fachada_edf1 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf1")
+            altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf1")
+            
+            area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
+            # Correção: Adicionado o argumento 'key'
+            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf1:.2f}", key="edf1_area_metric")
+
+            area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf1")
+
+            porcentagem_abertura = 0
+            if area_fachada_calculada_edf1 > 0:
+                porcentagem_abertura = (area_abertura_edf1 / area_fachada_calculada_edf1) * 100
+            
+            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura:.2f} %", key="edf1_porcentagem_metric")
+
+            st.markdown("---")
+
+            st.markdown(f"**Fachada a usar na comparação (de {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
+            
+            st.markdown(f"#### Porcentagem de abertura de {edf2_data['nome']}")
+            largura_fachada_edf2 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf2")
+            altura_fachada_edf2 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf2")
+            
+            area_fachada_calculada_edf2 = largura_fachada_edf2 * altura_fachada_edf2
+            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf2:.2f}", key="edf2_area_metric")
+            
+            area_abertura_edf2 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf2")
+
+            porcentagem_abertura_edf2 = 0
+            if area_fachada_calculada_edf2 > 0:
+                porcentagem_abertura_edf2 = (area_abertura_edf2 / area_fachada_calculada_edf2) * 100
+            
+            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura_edf2:.2f} %", key="edf2_metric")
+
+            # Pergunta do bombeiro
+            st.markdown("---")
+            st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
+
+            # Botão de comparação
+            if st.button("➕ Adicionar nova comparação"):
+                if "comparacoes_extra" not in st.session_state:
+                    st.session_state.comparacoes_extra = []
+                novo_id = len(st.session_state.comparacoes_extra)
+                st.session_state.comparacoes_extra.append(novo_id)
+            
+            # Comparações adicionais (dinâmicas)
+            for idx in st.session_state.comparacoes_extra:
+                st.markdown("---")
+                edf_a = st.selectbox("Selecione a Edificação A:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
+                edf_b = st.selectbox("Selecione a Edificação B:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
+    
+                edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
+                edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
+    
+                if edf_a_data and edf_b_data:
+                    fachada_a = fachada_edificacao(edf_a_data)
+                    fachada_b = fachada_edificacao(edf_b_data)
+    
+                    if fachada_a == fachada_b:
+                        st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
+                    else:
+                        st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
+                        st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
