@@ -193,4 +193,3 @@ if mostrar_campos:
             else:
                 st.markdown(f"✅ A fachada a analisar de **{edf1}** é: **{fachada_edf1}**.")
                 st.markdown(f"✅ A fachada a analisar de **{edf2}** é: **{fachada_edf2}**.")
-
