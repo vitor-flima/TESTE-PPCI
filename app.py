@@ -268,20 +268,21 @@ for i in range(int(num_anexos)):
         "nome": nome,
         "area": area,
         "uso": uso,
-        "carga_incendio": carga
+        "carga_incendio": carga,
+        "terrea": "Sim",  # todos os anexos são considerados térreos
+        "um_ap_por_pav": None,
+        "altura": 0.0  # altura fixa para anexos
     })
 
-    st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
+st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
+
     
     # 🔀 Combinação edf1 × edf2 — aparece somente se houver mais de uma edificação
     if len(torres) + len(anexos) > 1:
-        st.markdown("### 🔀 Comparação entre Edificações")
-    
         todas_edificacoes = torres + anexos
         nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
     
-        edf1 = st.selectbox("Selecione:", nomes_edificacoes, key="edf1")
-        edf2 = st.selectbox("Selecione:", [n for n in nomes_edificacoes if n != edf1], key="edf2")
+        st.markdown("### 🔀 Comparação entre Edificações")
     
         def fachada_edificacao(edf):
             if "um_ap_por_pav" in edf and edf["um_ap_por_pav"] == "Sim":
@@ -300,6 +301,10 @@ for i in range(int(num_anexos)):
             else:
                 return "toda a fachada do edifício"
     
+        # Comparação inicial
+        edf1 = st.selectbox("Selecione:", nomes_edificacoes, key="edf1")
+        edf2 = st.selectbox("Selecione:", [n for n in nomes_edificacoes if n != edf1], key="edf2")
+    
         edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1), None)
         edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2), None)
     
@@ -313,14 +318,17 @@ for i in range(int(num_anexos)):
                 st.markdown(f"✅ A fachada a analisar de **{edf1}** é: **{fachada1}**.")
                 st.markdown(f"✅ A fachada a analisar de **{edf2}** é: **{fachada2}**.")
     
-        # ➕ Botão para adicionar mais comparações (se houver 3 ou mais edificações)
+        # ➕ Comparações adicionais (dinâmicas)
         if len(todas_edificacoes) >= 3:
-            st.markdown("### ➕ Comparar mais edificações")
-            num_comparacoes = st.number_input("Quantas comparações adicionais deseja fazer?", min_value=0, max_value=len(todas_edificacoes) - 2, step=1)
+            if "comparacoes" not in st.session_state:
+                st.session_state.comparacoes = []
     
-            for j in range(int(num_comparacoes)):
-                edf_a = st.selectbox(f"Selecione edificação A ({j+1})", nomes_edificacoes, key=f"extra_edf_a_{j}")
-                edf_b = st.selectbox(f"Selecione edificação B ({j+1})", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{j}")
+            if st.button("➕ Adicionar nova comparação"):
+                st.session_state.comparacoes.append(len(st.session_state.comparacoes))
+    
+            for idx in st.session_state.comparacoes:
+                edf_a = st.selectbox(f"Selecione:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
+                edf_b = st.selectbox(f"Selecione:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
     
                 edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
                 edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
