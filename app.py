@@ -270,9 +270,9 @@ for i in range(int(num_anexos)):
         "carga_incendio": carga
     })
 
-st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
-
-# 🔀 Combinação edf1 × edf2 — aparece somente se houver mais de uma edificação
+    st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
+    
+    # 🔀 Combinação edf1 × edf2 — aparece somente se houver mais de uma edificação
     if len(torres) + len(anexos) > 1:
         st.markdown("### 🔀 Comparação entre Edificações")
     
