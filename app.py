@@ -315,6 +315,7 @@ if mostrar_campos:
             altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf1")
             
             area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
+            # Correção: Adicionado o argumento 'key'
             st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf1:.2f}", key="edf1_area_metric")
 
             area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf1")
@@ -331,45 +332,4 @@ if mostrar_campos:
             
             st.markdown(f"#### Porcentagem de abertura de {edf2_data['nome']}")
             largura_fachada_edf2 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf2")
-            altura_fachada_edf2 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf2")
-            
-            area_fachada_calculada_edf2 = largura_fachada_edf2 * altura_fachada_edf2
-            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf2:.2f}", key="edf2_area_metric")
-            
-            area_abertura_edf2 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf2")
-
-            porcentagem_abertura_edf2 = 0
-            if area_fachada_calculada_edf2 > 0:
-                porcentagem_abertura_edf2 = (area_abertura_edf2 / area_fachada_calculada_edf2) * 100
-            
-            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura_edf2:.2f} %", key="edf2_metric")
-
-            # Pergunta do bombeiro
-            st.markdown("---")
-            st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
-
-            # Botão de comparação
-            if st.button("➕ Adicionar nova comparação"):
-                if "comparacoes_extra" not in st.session_state:
-                    st.session_state.comparacoes_extra = []
-                novo_id = len(st.session_state.comparacoes_extra)
-                st.session_state.comparacoes_extra.append(novo_id)
-            
-            # Comparações adicionais (dinâmicas)
-            for idx in st.session_state.comparacoes_extra:
-                st.markdown("---")
-                edf_a = st.selectbox("Selecione a Edificação A:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
-                edf_b = st.selectbox("Selecione a Edificação B:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
-    
-                edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
-                edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
-    
-                if edf_a_data and edf_b_data:
-                    fachada_a = fachada_edificacao(edf_a_data)
-                    fachada_b = fachada_edificacao(edf_b_data)
-    
-                    if fachada_a == fachada_b:
-                        st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
-                    else:
-                        st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
-                        st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
+            altura_fachada_edf2 = st.number_
