@@ -114,7 +114,12 @@ if mostrar_campos:
     linha_selecionada["UltimoUsuario"] = f"{nome_usuario} + Copilot"
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
 
-    st.markdown("### 🏢 Levantamento das Edificações do Empreendimento")
+    # 🔻 Separação visual destacada
+    st.markdown("---")
+    st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
+
+    # 🏢 Novo título atualizado
+    st.markdown("### 🏢 Levantamento das Edificações do Empreendimento para Distâncias de Isolamento")
     st.markdown("As medidas de segurança podem ser determinadas individualmente para cada edificação, desde que estejam isoladas. Caso contrário, são consideradas como um único edifício.")
 
     # Torres residenciais
