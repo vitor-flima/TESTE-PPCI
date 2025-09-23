@@ -1,4 +1,3 @@
-# Correção forçada
 # 📦 Importações
 import streamlit as st
 import pandas as pd
@@ -124,13 +123,13 @@ if mostrar_campos:
     st.markdown("As medidas de segurança podem ser determinadas individualmente para cada edificação, desde que estejam isoladas. Caso contrário, são consideradas como um único edifício.")
 
     # Torres residenciais
-    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1)
+    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
     torres = []
     
     for i in range(int(num_torres)):
         st.markdown(f"**Edificação Residencial {i+1}**")
         nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
-        area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}")
+        area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}", value=0.0)
         terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
     
         if terrea == "Não":
@@ -204,7 +203,7 @@ if mostrar_campos:
             st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
     
             # 🔢 Campo de entrada da altura — só aparece se não for térrea
-            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}")
+            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}", value=0.0)
     
         else:
             um_ap_por_pav = None
@@ -234,7 +233,7 @@ if mostrar_campos:
 
     # 📎 Anexos do Projeto
     st.markdown("### 📎 Anexos do Projeto")
-    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1)
+    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1, value=0)
     anexos = []
     
     # 🔽 Lista de opções de uso/ocupação
@@ -259,7 +258,7 @@ if mostrar_campos:
     for i in range(int(num_anexos)):
         st.markdown(f"**Anexo {i+1}**")
         nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
-        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}")
+        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}", value=0.0)
         
         uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
         carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
@@ -312,13 +311,13 @@ if mostrar_campos:
             st.markdown(f"**Fachada a usar na comparação (de {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
             
             st.markdown(f"#### Porcentagem de abertura de {edf1_data['nome']}")
-            largura_fachada_edf1 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf1")
-            altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf1")
+            largura_fachada_edf1 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf1", value=0.0)
+            altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf1", value=0.0)
             
             area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
             st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf1:.2f}", key="edf1_area_metric")
 
-            area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf1")
+            area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf1", value=0.0)
 
             porcentagem_abertura = 0
             if area_fachada_calculada_edf1 > 0:
@@ -331,13 +330,13 @@ if mostrar_campos:
             st.markdown(f"**Fachada a usar na comparação (de {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
             
             st.markdown(f"#### Porcentagem de abertura de {edf2_data['nome']}")
-            largura_fachada_edf2 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf2")
-            altura_fachada_edf2 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf2")
+            largura_fachada_edf2 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf2", value=0.0)
+            altura_fachada_edf2 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf2", value=0.0)
             
             area_fachada_calculada_edf2 = largura_fachada_edf2 * altura_fachada_edf2
             st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf2:.2f}", key="edf2_area_metric")
             
-            area_abertura_edf2 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf2")
+            area_abertura_edf2 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf2", value=0.0)
 
             porcentagem_abertura_edf2 = 0
             if area_fachada_calculada_edf2 > 0:
