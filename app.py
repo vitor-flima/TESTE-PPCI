@@ -142,7 +142,7 @@ if mostrar_campos:
         })
 
     # Anexos
-     st.markdown("### 📎 Anexos do Projeto")
+    st.markdown("### 📎 Anexos do Projeto")
     num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1)
     anexos = []
 
