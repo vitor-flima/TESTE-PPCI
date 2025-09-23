@@ -137,7 +137,7 @@ if mostrar_campos:
             um_ap_por_pav = st.radio(f"A edificação {i+1} é de um apartamento por pavimento?", ["Sim", "Não"], key=f"ap_por_pav_{i}")
 
             subsolo_tecnico = st.radio(
-                f"Existe subsolo técnico na edificação {i+1}?",
+                f"Existe subsolo na edificação {i+1}?",
                 ["Não", "Sim"], key=f"subsolo_tecnico_{i}"
             )
 
