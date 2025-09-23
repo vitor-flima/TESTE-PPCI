@@ -258,4 +258,4 @@ if mostrar_campos:
     for i in range(int(num_anexos)):
         st.markdown(f"**Anexo {i+1}**")
         nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
-        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.
+        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}")
