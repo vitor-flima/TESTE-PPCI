@@ -233,47 +233,47 @@ if mostrar_campos:
 
 
     # 📎 Anexos do Projeto
-st.markdown("### 📎 Anexos do Projeto")
-num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1)
-anexos = []
-
-# 🔽 Lista de opções de uso/ocupação
-opcoes_uso_anexo = [
-    "C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros",
-    "F-6; Clube social e Salão de Festa; Buffets, clubes sociais, bingo, bilhares, tiro ao alvo, boliche",
-    "F-8; Local para refeição; Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas",
-    "G-1; Garagem sem acesso de público e sem abastecimento; Garagens automáticas, com manobristas",
-    "G-2; Garagem com acesso de público e sem abastecimento; Garagens coletivas sem automação",
-    "J-2; Depósito de lixo; Carga geral do decreto de 300 MJ/m²"
-]
-
-# 🔽 Lista de opções de carga de incêndio
-opcoes_carga_incendio = [
-    "C-1; Comércio varejista de alimentos; Minimercados, mercearias, armazéns — 300 MJ/m²",
-    "F-8; Cantinas privativas; Serviços de alimentação — 300 MJ/m²",
-    "F-6; Recreação e lazer não especificados; Atividades diversas — 600 MJ/m²",
-    "G-1/G-2; Estacionamento de veículos; Garagens automáticas ou coletivas — 300 MJ/m²",
-    "J-2; Depósito de lixo; Carga geral do decreto — 300 MJ/m²"
-]
-
-for i in range(int(num_anexos)):
-    st.markdown(f"**Anexo {i+1}**")
-    nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
-    area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}")
+    st.markdown("### 📎 Anexos do Projeto")
+    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1)
+    anexos = []
     
-    uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
-    carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
-
-    anexos.append({
-        "nome": nome,
-        "area": area,
-        "uso": uso,
-        "carga_incendio": carga,
-        "terrea": "Sim",  # todos os anexos são considerados térreos
-        "um_ap_por_pav": None,
-        "altura": 0.0  # altura fixa para anexos
-    })
-
+    # 🔽 Lista de opções de uso/ocupação
+    opcoes_uso_anexo = [
+        "C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros",
+        "F-6; Clube social e Salão de Festa; Buffets, clubes sociais, bingo, bilhares, tiro ao alvo, boliche",
+        "F-8; Local para refeição; Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas",
+        "G-1; Garagem sem acesso de público e sem abastecimento; Garagens automáticas, com manobristas",
+        "G-2; Garagem com acesso de público e sem abastecimento; Garagens coletivas sem automação",
+        "J-2; Depósito de lixo; Carga geral do decreto de 300 MJ/m²"
+    ]
+    
+    # 🔽 Lista de opções de carga de incêndio
+    opcoes_carga_incendio = [
+        "C-1; Comércio varejista de alimentos; Minimercados, mercearias, armazéns — 300 MJ/m²",
+        "F-8; Cantinas privativas; Serviços de alimentação — 300 MJ/m²",
+        "F-6; Recreação e lazer não especificados; Atividades diversas — 600 MJ/m²",
+        "G-1/G-2; Estacionamento de veículos; Garagens automáticas ou coletivas — 300 MJ/m²",
+        "J-2; Depósito de lixo; Carga geral do decreto — 300 MJ/m²"
+    ]
+    
+    for i in range(int(num_anexos)):
+        st.markdown(f"**Anexo {i+1}**")
+        nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
+        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}")
+        
+        uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
+        carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
+    
+        anexos.append({
+            "nome": nome,
+            "area": area,
+            "uso": uso,
+            "carga_incendio": carga,
+            "terrea": "Sim",  # todos os anexos são considerados térreos
+            "um_ap_por_pav": None,
+            "altura": 0.0  # altura fixa para anexos
+        })
+    
 st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
 
     
