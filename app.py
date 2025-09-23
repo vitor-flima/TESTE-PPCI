@@ -130,7 +130,6 @@ if mostrar_campos:
         st.markdown(f"**Edificação Residencial {i+1}**")
         nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
         area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}")
-        altura = st.number_input(f"Altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}")
         terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
 
         if terrea == "Não":
@@ -203,6 +202,9 @@ if mostrar_campos:
 
             st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
 
+            # 🔢 Campo de entrada da altura — agora vem logo abaixo da explicação
+            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}")
+
         else:
             um_ap_por_pav = None
             subsolo_tecnico = "Não"
@@ -212,6 +214,7 @@ if mostrar_campos:
             subsolo_menor_50 = "Não"
             duplex = "Não"
             atico = "Não"
+            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}")
 
         torres.append({
             "nome": nome,
@@ -227,7 +230,6 @@ if mostrar_campos:
             "duplex": duplex,
             "atico": atico
         })
-
 
     # Anexos
     st.markdown("### 📎 Anexos do Projeto")
