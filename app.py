@@ -277,7 +277,7 @@ if mostrar_campos:
 st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
 
 # 🔀 Combinação edf1 × edf2 — aparece somente se houver mais de uma edificação
-    if len(torres) + len(anexos) > 1:
+if len(torres) + len(anexos) > 1:
         todas_edificacoes = torres + anexos
         nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
     
@@ -341,5 +341,5 @@ st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas
                     else:
                         st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
                         st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.") 
-
+    
 
