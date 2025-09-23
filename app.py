@@ -182,10 +182,8 @@ if mostrar_campos:
                 ["Não", "Sim"], key=f"duplex_{i}"
             )
     
-            atico = st.radio(
-                f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
-                ["Não", "Sim"], key=f"atico_{i}"
-            )
+            # A linha abaixo estava incompleta, a corrigi
+            atico = st.radio(f"Há pavimento de ático/casa de máquinas acima do último pavimento?", ["Não", "Sim"], key=f"atico_{i}")
     
             # 🔍 Explicação da altura
             if duplex == "Sim":
@@ -202,5 +200,35 @@ if mostrar_campos:
     
             st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
     
-            # 🔢 Campo de entrada da altura — só aparece se não for térrea
-            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step
+            # 🔢 Campo de entrada da altura — a linha abaixo estava incompleta, a corrigi
+            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}")
+    
+        else:
+            um_ap_por_pav = None
+            subsolo_tecnico = "Não"
+            numero_subsolos = "0"
+            area_subsolo = "Menor que 500m²"
+            subsolo_ocupado = "Não"
+            subsolo_menor_50 = "Não"
+            duplex = "Não"
+            atico = "Não"
+            altura = 0.0  # valor fixo para térrea
+    
+        torres.append({
+            "nome": nome,
+            "area": area,
+            "altura": altura,
+            "terrea": terrea,
+            "um_ap_por_pav": um_ap_por_pav,
+            "subsolo_tecnico": subsolo_tecnico,
+            "numero_subsolos": numero_subsolos,
+            "area_subsolo": area_subsolo,
+            "subsolo_ocupado": subsolo_ocupado,
+            "subsolo_menor_50": subsolo_menor_50,
+            "duplex": duplex,
+            "atico": atico
+        })
+
+    # 📎 Anexos do Projeto
+    st.markdown("### 📎 Anexos do Projeto")
+    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step
