@@ -319,15 +319,18 @@ if mostrar_campos:
             
                 # ➕ Comparações adicionais (dinâmicas)
                 if len(todas_edificacoes) >= 3:
+                    st.markdown("Clique abaixo para comparar mais edificações:")
                     if "comparacoes" not in st.session_state:
                         st.session_state.comparacoes = []
-            
-                    if st.button("➕ Adicionar nova comparação"):
+                
+                    if st.button("➕ Adicionar comparação"):
                         st.session_state.comparacoes.append(len(st.session_state.comparacoes))
-            
+                
                     for idx in st.session_state.comparacoes:
-                        edf_a = st.selectbox(f"Selecione:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
-                        edf_b = st.selectbox(f"Selecione:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
+                        edf_a = st.selectbox("Selecione:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
+                        edf_b = st.selectbox("Selecione:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
+        
+
             
                         edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
                         edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
