@@ -308,90 +308,65 @@ if mostrar_campos:
         edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2), None)
     
         if edf1_data and edf2_data:
+            # Edificação 1
             st.markdown(f"**Fachada a usar na comparação (de {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
-            
-            st.markdown(f"#### Porcentagem de abertura de {edf1_data['nome']}")
-            largura_fachada_edf1 = st.number_input("Largura da fachada (m)", min_value=0.0, key="largura_fachada_edf1", value=0.0)
-            altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf1", value=0.0)
-            
-            area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
-            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf1:.2f}")
-            
-            area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf1", value=0.0)
-            
-            porcentagem_abertura = 0
-            if area_fachada_calculada_edf1 > 0:
-                porcentagem_abertura = (area_abertura_edf1 / area_fachada_calculada_edf1) * 100
-            
-            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura:.2f} %")
-
-
-            st.markdown("---")
-
-            st.markdown(f"**Fachada a usar na comparação (de {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
-            
             st.markdown(f"#### Porcentagem de abertura de {edf1_data['nome']}")
             largura_fachada_edf1 = st.number_input("Largura da fachada (m)", min_value=0.0, key=f"largura_fachada_edf1_{edf1_data['nome']}", value=0.0)
             altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key=f"altura_fachada_edf1_{edf1_data['nome']}", value=0.0)
-            
+    
             area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
-            area_fachada_formatada_edf1 = f"{area_fachada_calculada_edf1:.2f}"
-            st.metric(label="Área da fachada considerada (m²)", value=area_fachada_formatada_edf1)
-            
+            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf1:.2f}")
+    
             area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key=f"area_abertura_edf1_{edf1_data['nome']}", value=0.0)
-            
+    
             porcentagem_abertura_edf1 = 0
             if area_fachada_calculada_edf1 > 0:
                 porcentagem_abertura_edf1 = (area_abertura_edf1 / area_fachada_calculada_edf1) * 100
-            
-            porcentagem_formatada_edf1 = f"{porcentagem_abertura_edf1:.2f} %"
-            st.metric(label="Porcentagem de abertura", value=porcentagem_formatada_edf1)
-            
-            -------------
-            # Porcentagem de abertura da edificação 2
+    
+            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura_edf1:.2f} %")
+    
+            # Edificação 2
             st.markdown("---")
+            st.markdown(f"**Fachada a usar na comparação (de {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
             st.markdown(f"#### Porcentagem de abertura de {edf2_data['nome']}")
             largura_fachada_edf2 = st.number_input("Largura da fachada (m)", min_value=0.0, key=f"largura_fachada_edf2_{edf2_data['nome']}", value=0.0)
             altura_fachada_edf2 = st.number_input("Altura da fachada (m)", min_value=0.0, key=f"altura_fachada_edf2_{edf2_data['nome']}", value=0.0)
-            
+    
             area_fachada_calculada_edf2 = largura_fachada_edf2 * altura_fachada_edf2
-            area_fachada_formatada_edf2 = f"{area_fachada_calculada_edf2:.2f}"
-            st.metric(label="Área da fachada considerada (m²)", value=area_fachada_formatada_edf2)
-            
+            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf2:.2f}")
+    
             area_abertura_edf2 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key=f"area_abertura_edf2_{edf2_data['nome']}", value=0.0)
-            
+    
             porcentagem_abertura_edf2 = 0
             if area_fachada_calculada_edf2 > 0:
                 porcentagem_abertura_edf2 = (area_abertura_edf2 / area_fachada_calculada_edf2) * 100
-            
-            porcentagem_formatada_edf2 = f"{porcentagem_abertura_edf2:.2f} %"
-            st.metric(label="Porcentagem de abertura", value=porcentagem_formatada_edf2)
-            
-            -------------
+    
+            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura_edf2:.2f} %")
+    
             # Pergunta do bombeiro
             st.markdown("---")
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
-            
-            # Botão de comparação
+    
+            # Botão de comparação adicional
             if st.button("➕ Adicionar nova comparação"):
                 if "comparacoes_extra" not in st.session_state:
                     st.session_state.comparacoes_extra = []
                 novo_id = len(st.session_state.comparacoes_extra)
                 st.session_state.comparacoes_extra.append(novo_id)
-            
-            # Comparações adicionais (dinâmicas)
+    
+            # Comparações adicionais
             for idx in st.session_state.comparacoes_extra:
                 st.markdown("---")
                 edf_a = st.selectbox("Selecione a Edificação A:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
                 edf_b = st.selectbox("Selecione a Edificação B:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
-            
+    
                 edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
                 edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
-            
+    
                 if edf_a_data and edf_b_data:
                     fachada_a = fachada_edificacao(edf_a_data)
                     fachada_b = fachada_edificacao(edf_b_data)
-            
+    
                     if fachada_a == fachada_b:
                         st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
                     else:
