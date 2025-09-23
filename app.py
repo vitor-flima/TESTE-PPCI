@@ -315,7 +315,6 @@ if mostrar_campos:
             altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key="altura_fachada_edf1")
             
             area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
-            # Correção: Adicionado o argumento 'key'
             st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf1:.2f}", key="edf1_area_metric")
 
             area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key="area_abertura_edf1")
