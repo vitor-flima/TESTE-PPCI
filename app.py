@@ -273,36 +273,36 @@ for i in range(int(num_anexos)):
 st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
 
 # 🔀 Combinação edf1 × edf2 — aparece somente se houver mais de uma edificação
-if len(torres) + len(anexos) > 1:
-    st.markdown("### 🔀 Comparação entre Edificações")
-
-    todas_edificacoes = torres + anexos
-    nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
-
-    edf1 = st.selectbox("Selecione edf1", nomes_edificacoes, key="edf1")
-    edf2 = st.selectbox("Selecione edf2", [n for n in nomes_edificacoes if n != edf1], key="edf2")
-
-    # 🔍 Lógica de fachada com base em altura e área
-    edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1), None)
-    edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2), None)
-
-    if edf1_data and edf2_data:
-        def tipo_fachada(area, altura):
-            if area <= 750 and altura < 12:
-                return "toda a área da fachada"
-            elif area > 750 and altura < 12:
-                return "fachada da área do maior compartimento"
-            elif area > 750 and altura >= 12:
-                return "fachada da área do maior compartimento"
+    if len(torres) + len(anexos) > 1:
+        st.markdown("### 🔀 Comparação entre Edificações")
+    
+        todas_edificacoes = torres + anexos
+        nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
+    
+        edf1 = st.selectbox("Selecione edf1", nomes_edificacoes, key="edf1")
+        edf2 = st.selectbox("Selecione edf2", [n for n in nomes_edificacoes if n != edf1], key="edf2")
+    
+        # 🔍 Lógica de fachada com base em altura e área
+        edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1), None)
+        edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2), None)
+    
+        if edf1_data and edf2_data:
+            def tipo_fachada(area, altura):
+                if area <= 750 and altura < 12:
+                    return "toda a área da fachada"
+                elif area > 750 and altura < 12:
+                    return "fachada da área do maior compartimento"
+                elif area > 750 and altura >= 12:
+                    return "fachada da área do maior compartimento"
+                else:
+                    return "toda a área da fachada"
+    
+            fachada_edf1 = tipo_fachada(edf1_data["area"], edf1_data["altura"])
+            fachada_edf2 = tipo_fachada(edf2_data["area"], edf2_data["altura"])
+    
+            if fachada_edf1 == fachada_edf2:
+                st.markdown(f"✅ A fachada a analisar de **{edf1}** e **{edf2}** é: **{fachada_edf1}**.")
             else:
-                return "toda a área da fachada"
-
-        fachada_edf1 = tipo_fachada(edf1_data["area"], edf1_data["altura"])
-        fachada_edf2 = tipo_fachada(edf2_data["area"], edf2_data["altura"])
-
-        if fachada_edf1 == fachada_edf2:
-            st.markdown(f"✅ A fachada a analisar de **{edf1}** e **{edf2}** é: **{fachada_edf1}**.")
-        else:
-            st.markdown(f"✅ A fachada a analisar de **{edf1}** é: **{fachada_edf1}**.")
-            st.markdown(f"✅ A fachada a analisar de **{edf2}** é: **{fachada_edf2}**.")
+                st.markdown(f"✅ A fachada a analisar de **{edf1}** é: **{fachada_edf1}**.")
+                st.markdown(f"✅ A fachada a analisar de **{edf2}** é: **{fachada_edf2}**.")
 
