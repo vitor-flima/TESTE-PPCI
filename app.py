@@ -147,7 +147,7 @@ if mostrar_campos:
                 )
     
                 numero_subsolos = st.radio(
-                    f"Quantidade de subsolos na edificação {i+1}",
+                    f"Quantidade de subsolos na edificação {i+1}?",
                     ["1", "Mais de 1"], key=f"numero_subsolos_{i}"
                 )
     
@@ -182,8 +182,10 @@ if mostrar_campos:
                 ["Não", "Sim"], key=f"duplex_{i}"
             )
     
-            # A linha abaixo estava incompleta, a corrigi
-            atico = st.radio(f"Há pavimento de ático/casa de máquinas acima do último pavimento?", ["Não", "Sim"], key=f"atico_{i}")
+            atico = st.radio(
+                f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
+                ["Não", "Sim"], key=f"atico_{i}"
+            )
     
             # 🔍 Explicação da altura
             if duplex == "Sim":
@@ -200,7 +202,7 @@ if mostrar_campos:
     
             st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
     
-            # 🔢 Campo de entrada da altura — a linha abaixo estava incompleta, a corrigi
+            # 🔢 Campo de entrada da altura — só aparece se não for térrea
             altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}")
     
         else:
@@ -231,4 +233,29 @@ if mostrar_campos:
 
     # 📎 Anexos do Projeto
     st.markdown("### 📎 Anexos do Projeto")
-    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step
+    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1)
+    anexos = []
+    
+    # 🔽 Lista de opções de uso/ocupação
+    opcoes_uso_anexo = [
+        "C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros",
+        "F-6; Clube social e Salão de Festa; Buffets, clubes sociais, bingo, bilhares, tiro ao alvo, boliche",
+        "F-8; Local para refeição; Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas",
+        "G-1; Garagem sem acesso de público e sem abastecimento; Garagens automáticas, com manobristas",
+        "G-2; Garagem com acesso de público e sem abastecimento; Garagens coletivas sem automação",
+        "J-2; Depósito de lixo; Carga geral do decreto de 300 MJ/m²"
+    ]
+    
+    # 🔽 Lista de opções de carga de incêndio
+    opcoes_carga_incendio = [
+        "C-1; Comércio varejista de alimentos; Minimercados, mercearias, armazéns — 300 MJ/m²",
+        "F-8; Cantinas privativas; Serviços de alimentação — 300 MJ/m²",
+        "F-6; Recreação e lazer não especificados; Atividades diversas — 600 MJ/m²",
+        "G-1/G-2; Estacionamento de veículos; Garagens automáticas ou coletivas — 300 MJ/m²",
+        "J-2; Depósito de lixo; Carga geral do decreto — 300 MJ/m²"
+    ]
+    
+    for i in range(int(num_anexos)):
+        st.markdown(f"**Anexo {i+1}**")
+        nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
+        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.
