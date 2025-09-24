@@ -9,6 +9,10 @@ from datetime import datetime
 st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
 st.title("📁 Ferramenta de Projetos PPCI")
 
+# Inicializa o estado da sessão para armazenar as comparações
+if 'comparisons' not in st.session_state:
+    st.session_state.comparisons = []
+
 # 🧠 Funções auxiliares
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
@@ -68,6 +72,7 @@ def notas_relevantes(resumo, altura):
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 df = pd.DataFrame()
 arquivo = None
+nome_arquivo_entrada = None
 linha_selecionada = None
 mostrar_campos = False
 
@@ -117,27 +122,11 @@ if mostrar_campos:
     st.markdown("---")
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
     
-    # ⚡️ ALTERAÇÃO: Título principal centralizado
-    st.markdown("<h3 style='text-align: center;'>🏢 Levantamento das Edificações e Anexos</h3>", unsafe_allow_html=True)
+    # 🏢 Seção das Edificações Residenciais
+    st.markdown("### 🏢 Levantamento das Edificações Residenciais")
     
-    # ⚡️ ALTERAÇÃO: Quantidades de edificações e anexos lado a lado
-    col_qtd_edificacoes, col_qtd_anexos = st.columns(2)
-
-    with col_qtd_edificacoes:
-        num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
-    
-    with col_qtd_anexos:
-        num_anexos = st.number_input(
-            "Quantidade de anexos",
-            min_value=0,
-            step=1,
-            value=0,
-            help="Edificações térreas com permanência de pessoas e de uso não residencial."
-        )
-
+    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
     torres = []
-    st.markdown("### 🏢 Edificações Residenciais")
-    
     if num_torres > 0:
         for i in range(int(num_torres)):
             st.markdown(f"**Edificação Residencial {i+1}**")
