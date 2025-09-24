@@ -389,10 +389,22 @@ if mostrar_campos:
     
             # Comparações adicionais
             if "comparacoes_extra" in st.session_state:
+                comparacoes_a_remover = []
                 for idx in st.session_state.comparacoes_extra:
                     st.markdown("---")
-                    edf_a = st.selectbox("Selecione a Edificação A:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
-                    edf_b = st.selectbox("Selecione a Edificação B:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
+                    col1, col2 = st.columns([4, 1])
+                    with col1:
+                        edf_a = st.selectbox("Selecione a Edificação A:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
+                        edf_b = st.selectbox("Selecione a Edificação B:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
+                    with col2:
+                        if st.button("❌ Remover", key=f"remover_comparacao_{idx}"):
+                            comparacoes_a_remover.append(idx)
+            
+                # Remove comparações marcadas
+                if comparacoes_a_remover:
+                    st.session_state.comparacoes_extra = [i for i in st.session_state.comparacoes_extra if i not in comparacoes_a_remover]
+
+
     
                     edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
                     edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
