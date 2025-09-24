@@ -128,29 +128,37 @@ if mostrar_campos:
     
     for i in range(int(num_torres)):
         st.markdown(f"**Edificação Residencial {i+1}**")
-        nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
-        area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}", value=0.0)
+        
+        # ⚡️ ALTERAÇÃO: Layout com colunas
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
+        
+        with col2:
+            area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}", value=0.0)
+            
         terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
-    
+        
         if terrea == "Não":
             um_ap_por_pav = st.radio(f"A edificação {i+1} é de um apartamento por pavimento?", ["Sim", "Não"], key=f"ap_por_pav_{i}")
-    
+            
             subsolo_tecnico = st.radio(
                 f"Existe subsolo na edificação {i+1}?",
                 ["Não", "Sim"], key=f"subsolo_tecnico_{i}"
             )
-    
+            
             if subsolo_tecnico == "Sim":
                 st.markdown(
                     "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
                     unsafe_allow_html=True
                 )
-    
+                
                 numero_subsolos = st.radio(
                     f"Quantidade de subsolos na edificação {i+1}?",
                     ["1", "Mais de 1"], key=f"numero_subsolos_{i}"
                 )
-    
+                
                 if numero_subsolos == "1":
                     area_subsolo = st.selectbox(
                         f"Área do subsolo da edificação {i+1}",
@@ -158,12 +166,12 @@ if mostrar_campos:
                     )
                 else:
                     area_subsolo = "Maior que 500m²"
-    
+                
                 subsolo_ocupado = st.radio(
                     f"Algum dos dois primeiros subsolos possui ocupação secundária?",
                     ["Não", "Sim"], key=f"subsolo_ocupado_{i}"
                 )
-    
+                
                 if subsolo_ocupado == "Sim":
                     subsolo_menor_50 = st.radio(
                         f"A ocupação secundária tem no máximo 50m² em cada subsolo?",
@@ -176,35 +184,35 @@ if mostrar_campos:
                 area_subsolo = "Menor que 500m²"
                 subsolo_ocupado = "Não"
                 subsolo_menor_50 = "Não"
-    
+            
             duplex = st.radio(
                 f"Existe duplex no último pavimento da edificação {i+1}?",
                 ["Não", "Sim"], key=f"duplex_{i}"
             )
-    
+            
             atico = st.radio(
                 f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
                 ["Não", "Sim"], key=f"atico_{i}"
             )
-    
+            
             # 🔍 Explicação da altura
             if duplex == "Sim":
                 parte_superior = "Cota do primeiro pavimento do duplex"
             else:
                 parte_superior = "Cota de piso do último pavimento habitado"
-    
+            
             if subsolo_tecnico == "Não" and subsolo_ocupado == "Não":
                 parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
             elif subsolo_tecnico == "Sim" and subsolo_ocupado == "Sim" and subsolo_menor_50 == "Não":
                 parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
             else:
                 parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-    
+            
             st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
-    
+            
             # 🔢 Campo de entrada da altura — só aparece se não for térrea
             altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}", value=0.0)
-    
+        
         else:
             um_ap_por_pav = None
             subsolo_tecnico = "Não"
@@ -215,7 +223,7 @@ if mostrar_campos:
             duplex = "Não"
             atico = "Não"
             altura = 0.0  # valor fixo para térrea
-    
+        
         torres.append({
             "nome": nome,
             "area": area,
@@ -257,20 +265,32 @@ if mostrar_campos:
     
     for i in range(int(num_anexos)):
         st.markdown(f"**Anexo {i+1}**")
-        nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
-        area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}", value=0.0)
         
-        uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
-        carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
+        # ⚡️ ALTERAÇÃO: Layout com colunas
+        col_anexo_1, col_anexo_2 = st.columns(2)
         
+        with col_anexo_1:
+            nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
+        
+        with col_anexo_2:
+            area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}", value=0.0)
+            
+        col_anexo_3, col_anexo_4 = st.columns(2)
+        
+        with col_anexo_3:
+            uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
+        
+        with col_anexo_4:
+            carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
+            
         anexos.append({
             "nome": nome,
             "area": area,
             "uso": uso,
             "carga_incendio": carga,
-            "terrea": "Sim",  # todos os anexos são considerados térreos
+            "terrea": "Sim",
             "um_ap_por_pav": None,
-            "altura": 0.0  # altura fixa para anexos
+            "altura": 0.0
         })
         
     st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
@@ -363,54 +383,53 @@ if mostrar_campos:
     
                 edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
                 edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
-
+    
                 if edf_a_data and edf_b_data:
-                                fachada_a = fachada_edificacao(edf_a_data)
-                                fachada_b = fachada_edificacao(edf_b_data)
-                
-                                if fachada_a == fachada_b:
-                                    st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
-                                else:
-                                    st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
-                                    st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
-                
-                                col_dim = st.columns(2)
-                                with col_dim[0]:
-                                    largura_a = st.number_input("Largura fachada A (m)", min_value=0.0, key=f"largura_a_{idx}")
-                                    altura_a = st.number_input("Altura fachada A (m)", min_value=0.0, key=f"altura_a_{idx}")
-                                    area_a = largura_a * altura_a
-                                    st.metric("Área fachada A (m²)", f"{area_a:.2f}")
-                                    abertura_a = st.number_input("Área de abertura A (m²)", min_value=0.0, key=f"abertura_a_{idx}")
-                                    porcentagem_a = (abertura_a / area_a) * 100 if area_a > 0 else 0
-                                    st.metric("Porcentagem de abertura A", f"{porcentagem_a:.2f} %")
-                
-                                with col_dim[1]:
-                                    largura_b = st.number_input("Largura fachada B (m)", min_value=0.0, key=f"largura_b_{idx}")
-                                    altura_b = st.number_input("Altura fachada B (m)", min_value=0.0, key=f"altura_b_{idx}")
-                                    area_b = largura_b * altura_b
-                                    st.metric("Área fachada B (m²)", f"{area_b:.2f}")
-                                    abertura_b = st.number_input("Área de abertura B (m²)", min_value=0.0, key=f"abertura_b_{idx}")
-                                    porcentagem_b = (abertura_b / area_b) * 100 if area_b > 0 else 0
-                                    st.metric("Porcentagem de abertura B", f"{porcentagem_b:.2f} %")
-                
-                                fator_x_a = max(largura_a, altura_a) / max(1.0, min(largura_a, altura_a))
-                                fator_x_b = max(largura_b, altura_b) / max(1.0, min(largura_b, altura_b))
-                                valor_a = buscar_valor_tabela(porcentagem_a, fator_x_a)
-                                valor_b = buscar_valor_tabela(porcentagem_b, fator_x_b)
-                                menor_dim_a = min(largura_a, altura_a)
-                                menor_dim_b = min(largura_b, altura_b)
-                                acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
-                                dist_a = (valor_a * menor_dim_a) + acrescimo
-                                dist_b = (valor_b * menor_dim_b) + acrescimo
-                
-                                st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
-                                st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
-                
-                                # Botão de remover abaixo do bloco
-                                if st.button("❌ Remover comparação", key=f"remover_comparacao_{idx}"):
-                                    continue  # ignora esta comparação na próxima lista
-                    
-                                novas_comparacoes.append(idx)
-                    
+                    fachada_a = fachada_edificacao(edf_a_data)
+                    fachada_b = fachada_edificacao(edf_b_data)
+        
+                    if fachada_a == fachada_b:
+                        st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
+                    else:
+                        st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
+                        st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
+        
+                    col_dim = st.columns(2)
+                    with col_dim[0]:
+                        largura_a = st.number_input("Largura fachada A (m)", min_value=0.0, key=f"largura_a_{idx}")
+                        altura_a = st.number_input("Altura fachada A (m)", min_value=0.0, key=f"altura_a_{idx}")
+                        area_a = largura_a * altura_a
+                        st.metric("Área fachada A (m²)", f"{area_a:.2f}")
+                        abertura_a = st.number_input("Área de abertura A (m²)", min_value=0.0, key=f"abertura_a_{idx}")
+                        porcentagem_a = (abertura_a / area_a) * 100 if area_a > 0 else 0
+                        st.metric("Porcentagem de abertura A", f"{porcentagem_a:.2f} %")
+        
+                    with col_dim[1]:
+                        largura_b = st.number_input("Largura fachada B (m)", min_value=0.0, key=f"largura_b_{idx}")
+                        altura_b = st.number_input("Altura fachada B (m)", min_value=0.0, key=f"altura_b_{idx}")
+                        area_b = largura_b * altura_b
+                        st.metric("Área fachada B (m²)", f"{area_b:.2f}")
+                        abertura_b = st.number_input("Área de abertura B (m²)", min_value=0.0, key=f"abertura_b_{idx}")
+                        porcentagem_b = (abertura_b / area_b) * 100 if area_b > 0 else 0
+                        st.metric("Porcentagem de abertura B", f"{porcentagem_b:.2f} %")
+        
+                    fator_x_a = max(largura_a, altura_a) / max(1.0, min(largura_a, altura_a))
+                    fator_x_b = max(largura_b, altura_b) / max(1.0, min(largura_b, altura_b))
+                    valor_a = buscar_valor_tabela(porcentagem_a, fator_x_a)
+                    valor_b = buscar_valor_tabela(porcentagem_b, fator_x_b)
+                    menor_dim_a = min(largura_a, altura_a)
+                    menor_dim_b = min(largura_b, altura_b)
+                    acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
+                    dist_a = (valor_a * menor_dim_a) + acrescimo
+                    dist_b = (valor_b * menor_dim_b) + acrescimo
+        
+                    st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
+                    st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
+        
+                    # Botão de remover abaixo do bloco
+                    if st.button("❌ Remover comparação", key=f"remover_comparacao_{idx}"):
+                        continue  # ignora esta comparação na próxima lista
+            
+                    novas_comparacoes.append(idx)
+            
             st.session_state.comparacoes_extra = novas_comparacoes
-
