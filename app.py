@@ -118,10 +118,24 @@ if mostrar_campos:
     st.markdown("---")
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
     
-    # 🏢 Seção das Edificações Residenciais (Retângulo Laranja)
+    # 🏢 Seção das Edificações Residenciais
     st.markdown("### 🏢 Levantamento das Edificações Residenciais")
     
-    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
+    # ⚡️ ALTERAÇÃO: Quantidades de edificações e anexos lado a lado
+    col_qtd_edificacoes, col_qtd_anexos = st.columns(2)
+
+    with col_qtd_edificacoes:
+        num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
+    
+    with col_qtd_anexos:
+        num_anexos = st.number_input(
+            "Quantidade de anexos",
+            min_value=0,
+            step=1,
+            value=0,
+            help="Edificações térreas com permanência de pessoas e de uso não residencial."
+        )
+
     torres = []
     if num_torres > 0:
         for i in range(int(num_torres)):
@@ -236,15 +250,7 @@ if mostrar_campos:
 
     # 📎 Seção dos Anexos
     st.markdown("### 📎 Anexos do Projeto")
-    # ⚡️ ALTERAÇÃO: O aviso agora está na descrição (help) do campo
-    num_anexos = st.number_input(
-        "Quantidade de anexos",
-        min_value=0,
-        step=1,
-        value=0,
-        help="Edificações térreas com permanência de pessoas e de uso não residencial."
-    )
-
+    
     anexos = []
     if num_anexos > 0:
         # 🔽 Lista de opções de uso/ocupação
