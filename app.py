@@ -117,8 +117,8 @@ if mostrar_campos:
     st.markdown("---")
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
     
-    # 🏢 Seção das Edificações Residenciais
-    st.markdown("### 🏢 Levantamento das Edificações e Anexos")
+    # ⚡️ ALTERAÇÃO: Título principal centralizado
+    st.markdown("<h3 style='text-align: center;'>🏢 Levantamento das Edificações e Anexos</h3>", unsafe_allow_html=True)
     
     # ⚡️ ALTERAÇÃO: Quantidades de edificações e anexos lado a lado
     col_qtd_edificacoes, col_qtd_anexos = st.columns(2)
@@ -302,7 +302,7 @@ if mostrar_campos:
                 "altura": 0.0
             })
             
-    # 🔀 Bloco de Comparação entre Edificações
+    # 🔀 Bloco de Isolamento entre Edificações
     todas_edificacoes = torres + anexos
     if len(todas_edificacoes) > 1:
         nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
