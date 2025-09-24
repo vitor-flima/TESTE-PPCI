@@ -301,53 +301,18 @@ if mostrar_campos:
                 return "toda a fachada do edifício"
     
         # Comparação inicial
-        edf1 = st.selectbox("Selecione a Edificação 1:", nomes_edificacoes, key="comparacao_edf1_main")
-        edf2 = st.selectbox("Selecione a Edificação 2:", [n for n in nomes_edificacoes if n != edf1], key="comparacao_edf2_main")
+        col_init = st.columns(2)
+        with col_init[0]:
+            edf1 = st.selectbox("Edificação 1:", nomes_edificacoes, key="comparacao_edf1_main")
+        with col_init[1]:
+            edf2 = st.selectbox("Edificação 2:", [n for n in nomes_edificacoes if n != edf1], key="comparacao_edf2_main")
     
         edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1), None)
         edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2), None)
     
         if edf1_data and edf2_data:
-            # Edificação 1
-            st.markdown(f"**Fachada a usar na comparação (de {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
-            st.markdown(f"#### Porcentagem de abertura de {edf1_data['nome']}")
-            largura_fachada_edf1 = st.number_input("Largura da fachada (m)", min_value=0.0, key=f"largura_fachada_edf1_{edf1_data['nome']}", value=0.0)
-            altura_fachada_edf1 = st.number_input("Altura da fachada (m)", min_value=0.0, key=f"altura_fachada_edf1_{edf1_data['nome']}", value=0.0)
-    
-            area_fachada_calculada_edf1 = largura_fachada_edf1 * altura_fachada_edf1
-            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf1:.2f}")
-    
-            area_abertura_edf1 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key=f"area_abertura_edf1_{edf1_data['nome']}", value=0.0)
-    
-            porcentagem_abertura_edf1 = 0
-            if area_fachada_calculada_edf1 > 0:
-                porcentagem_abertura_edf1 = (area_abertura_edf1 / area_fachada_calculada_edf1) * 100
-    
-            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura_edf1:.2f} %")
-    
-            # Edificação 2
-            st.markdown("---")
-            st.markdown(f"**Fachada a usar na comparação (de {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
-            st.markdown(f"#### Porcentagem de abertura de {edf2_data['nome']}")
-            largura_fachada_edf2 = st.number_input("Largura da fachada (m)", min_value=0.0, key=f"largura_fachada_edf2_{edf2_data['nome']}", value=0.0)
-            altura_fachada_edf2 = st.number_input("Altura da fachada (m)", min_value=0.0, key=f"altura_fachada_edf2_{edf2_data['nome']}", value=0.0)
-    
-            area_fachada_calculada_edf2 = largura_fachada_edf2 * altura_fachada_edf2
-            st.metric(label="Área da fachada considerada (m²)", value=f"{area_fachada_calculada_edf2:.2f}")
-    
-            area_abertura_edf2 = st.number_input(f"Área de abertura dessa fachada (m²)", min_value=0.0, key=f"area_abertura_edf2_{edf2_data['nome']}", value=0.0)
-    
-            porcentagem_abertura_edf2 = 0
-            if area_fachada_calculada_edf2 > 0:
-                porcentagem_abertura_edf2 = (area_abertura_edf2 / area_fachada_calculada_edf2) * 100
-    
-            st.metric(label="Porcentagem de abertura", value=f"{porcentagem_abertura_edf2:.2f} %")
-    
-            # Pergunta do bombeiro
-            st.markdown("---")
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
-
-            # Função para buscar valor da tabela com base na % de abertura e fator x
+    
             def buscar_valor_tabela(porcentagem, fator_x):
                 tabela = {
                     20: [0.4, 0.4, 0.44, 0.46, 0.48, 0.49, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51],
@@ -362,61 +327,90 @@ if mostrar_campos:
                 porcentagem_mais_proxima = min(tabela.keys(), key=lambda p: abs(p - porcentagem))
                 indice_x = min(range(len(valores_x)), key=lambda i: abs(valores_x[i] - fator_x))
                 return tabela[porcentagem_mais_proxima][indice_x]
-
-            # Cálculo da distância de isolamento para Edificação 1
-            fator_x_edf1 = max(largura_fachada_edf1, altura_fachada_edf1) / max(1.0, min(largura_fachada_edf1, altura_fachada_edf1))
-            valor_tabela_edf1 = buscar_valor_tabela(porcentagem_abertura_edf1, fator_x_edf1)
-            menor_dim_edf1 = min(largura_fachada_edf1, altura_fachada_edf1)
-            acrescimo_edf1 = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
-            distancia_isolamento_edf1 = (valor_tabela_edf1 * menor_dim_edf1) + acrescimo_edf1
-            st.metric(label="Distância de isolamento (Edificação 1)", value=f"{distancia_isolamento_edf1:.2f} m")
-
-            # Cálculo da distância de isolamento para Edificação 2
-            fator_x_edf2 = max(largura_fachada_edf2, altura_fachada_edf2) / max(1.0, min(largura_fachada_edf2, altura_fachada_edf2))
-            valor_tabela_edf2 = buscar_valor_tabela(porcentagem_abertura_edf2, fator_x_edf2)
-            menor_dim_edf2 = min(largura_fachada_edf2, altura_fachada_edf2)
-            acrescimo_edf2 = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
-            distancia_isolamento_edf2 = (valor_tabela_edf2 * menor_dim_edf2) + acrescimo_edf2
-            st.metric(label="Distância de isolamento (Edificação 2)", value=f"{distancia_isolamento_edf2:.2f} m")
-
     
-            # Botão de comparação adicional
-            if st.button("➕ Adicionar nova comparação"):
-                if "comparacoes_extra" not in st.session_state:
-                    st.session_state.comparacoes_extra = []
-                novo_id = len(st.session_state.comparacoes_extra)
-                st.session_state.comparacoes_extra.append(novo_id)
-            
-            # Comparações adicionais
-            if "comparacoes_extra" in st.session_state:
-                novas_comparacoes = []
-                for idx in st.session_state.comparacoes_extra:
-                    with st.form(key=f"form_comparacao_{idx}"):
-                        st.markdown(f"### 🔁 Comparação Extra {idx + 1}")
-                        edf_a = st.selectbox("Edificação A:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
-                        edf_b = st.selectbox("Edificação B:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
-            
-                        edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
-                        edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
-            
-                        if edf_a_data and edf_b_data:
-                            fachada_a = fachada_edificacao(edf_a_data)
-                            fachada_b = fachada_edificacao(edf_b_data)
-            
-                            if fachada_a == fachada_b:
-                                st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
-                            else:
-                                st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
-                                st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
-            
-                        col1, col2 = st.columns([4, 1])
-                        with col1:
-                            manter = st.form_submit_button("✅ Manter comparação", use_container_width=True)
-                        with col2:
-                            remover = st.form_submit_button("❌ Remover", use_container_width=True)
-            
-                        if not remover:
+            for edf_label, edf_data in [("Edificação 1", edf1_data), ("Edificação 2", edf2_data)]:
+                st.markdown(f"**Fachada a usar na comparação ({edf_label} - {edf_data['nome']}):** {fachada_edificacao(edf_data)}")
+                largura = st.number_input(f"Largura da fachada ({edf_label})", min_value=0.0, key=f"largura_{edf_data['nome']}", value=0.0)
+                altura = st.number_input(f"Altura da fachada ({edf_label})", min_value=0.0, key=f"altura_{edf_data['nome']}", value=0.0)
+                area = largura * altura
+                st.metric(label=f"Área da fachada ({edf_label})", value=f"{area:.2f} m²")
+                abertura = st.number_input(f"Área de abertura ({edf_label})", min_value=0.0, key=f"abertura_{edf_data['nome']}", value=0.0)
+                porcentagem = (abertura / area) * 100 if area > 0 else 0
+                st.metric(label=f"Porcentagem de abertura ({edf_label})", value=f"{porcentagem:.2f} %")
+                fator_x = max(largura, altura) / max(1.0, min(largura, altura))
+                valor_tabela = buscar_valor_tabela(porcentagem, fator_x)
+                menor_dim = min(largura, altura)
+                acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
+                distancia = (valor_tabela * menor_dim) + acrescimo
+                st.metric(label=f"Distância de isolamento ({edf_label})", value=f"{distancia:.2f} m")
+    
+        # Comparações adicionais
+        if st.button("➕ Adicionar nova comparação"):
+            if "comparacoes_extra" not in st.session_state:
+                st.session_state.comparacoes_extra = []
+            novo_id = len(st.session_state.comparacoes_extra)
+            st.session_state.comparacoes_extra.append(novo_id)
+    
+        if "comparacoes_extra" in st.session_state:
+            novas_comparacoes = []
+            for idx in st.session_state.comparacoes_extra:
+                st.markdown(f"---\n### 🔁 Comparação Extra {idx + 1}")
+                col_edf = st.columns(2)
+                with col_edf[0]:
+                    edf_a = st.selectbox("Edificação A", nomes_edificacoes, key=f"extra_edf_a_{idx}")
+                with col_edf[1]:
+                    edf_b = st.selectbox("Edificação B", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
+    
+                edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
+                edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
+
+                if edf_a_data and edf_b_data:
+                                fachada_a = fachada_edificacao(edf_a_data)
+                                fachada_b = fachada_edificacao(edf_b_data)
+                
+                                if fachada_a == fachada_b:
+                                    st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
+                                else:
+                                    st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
+                                    st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
+                
+                                col_dim = st.columns(2)
+                                with col_dim[0]:
+                                    largura_a = st.number_input("Largura fachada A (m)", min_value=0.0, key=f"largura_a_{idx}")
+                                    altura_a = st.number_input("Altura fachada A (m)", min_value=0.0, key=f"altura_a_{idx}")
+                                    area_a = largura_a * altura_a
+                                    st.metric("Área fachada A (m²)", f"{area_a:.2f}")
+                                    abertura_a = st.number_input("Área de abertura A (m²)", min_value=0.0, key=f"abertura_a_{idx}")
+                                    porcentagem_a = (abertura_a / area_a) * 100 if area_a > 0 else 0
+                                    st.metric("Porcentagem de abertura A", f"{porcentagem_a:.2f} %")
+                
+                                with col_dim[1]:
+                                    largura_b = st.number_input("Largura fachada B (m)", min_value=0.0, key=f"largura_b_{idx}")
+                                    altura_b = st.number_input("Altura fachada B (m)", min_value=0.0, key=f"altura_b_{idx}")
+                                    area_b = largura_b * altura_b
+                                    st.metric("Área fachada B (m²)", f"{area_b:.2f}")
+                                    abertura_b = st.number_input("Área de abertura B (m²)", min_value=0.0, key=f"abertura_b_{idx}")
+                                    porcentagem_b = (abertura_b / area_b) * 100 if area_b > 0 else 0
+                                    st.metric("Porcentagem de abertura B", f"{porcentagem_b:.2f} %")
+                
+                                fator_x_a = max(largura_a, altura_a) / max(1.0, min(largura_a, altura_a))
+                                fator_x_b = max(largura_b, altura_b) / max(1.0, min(largura_b, altura_b))
+                                valor_a = buscar_valor_tabela(porcentagem_a, fator_x_a)
+                                valor_b = buscar_valor_tabela(porcentagem_b, fator_x_b)
+                                menor_dim_a = min(largura_a, altura_a)
+                                menor_dim_b = min(largura_b, altura_b)
+                                acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
+                                dist_a = (valor_a * menor_dim_a) + acrescimo
+                                dist_b = (valor_b * menor_dim_b) + acrescimo
+                
+                                st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
+                                st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
+                
+                            # Botão de remover abaixo do bloco
+                            if st.button("❌ Remover comparação", key=f"remover_comparacao_{idx}"):
+                                continue  # ignora esta comparação na próxima lista
+                
                             novas_comparacoes.append(idx)
-            
-                st.session_state.comparacoes_extra = novas_comparacoes
+                
+                        st.session_state.comparacoes_extra = novas_comparacoes
 
