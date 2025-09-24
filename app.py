@@ -119,7 +119,7 @@ if mostrar_campos:
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
     
     # 🏢 Seção das Edificações Residenciais
-    st.markdown("### 🏢 Levantamento das Edificações Residenciais")
+    st.markdown("### 🏢 Levantamento das Edificações e Anexos")
     
     # ⚡️ ALTERAÇÃO: Quantidades de edificações e anexos lado a lado
     col_qtd_edificacoes, col_qtd_anexos = st.columns(2)
