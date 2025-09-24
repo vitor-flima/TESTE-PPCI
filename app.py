@@ -309,7 +309,7 @@ if mostrar_campos:
     
         # ⚡️ ALTERAÇÃO: A linha agora tem a mesma espessura que a anterior
         st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
-        st.markdown("### 🔀 Comparação entre Edificações")
+        st.markdown("### 🔀 Isolamento entre Edificações")
     
         def fachada_edificacao(edf):
             if "um_ap_por_pav" in edf and edf["um_ap_por_pav"] == "Sim":
