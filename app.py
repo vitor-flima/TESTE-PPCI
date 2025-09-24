@@ -363,10 +363,8 @@ if mostrar_campos:
                 largura = st.number_input(f"Largura da fachada ({edf_label})", min_value=0.0, key=f"largura_{edf_data['nome']}", value=0.0)
                 altura = st.number_input(f"Altura da fachada ({edf_label})", min_value=0.0, key=f"altura_{edf_data['nome']}", value=0.0)
                 area = largura * altura
-                st.metric(label=f"Área da fachada ({edf_label})", value=f"{area:.2f} m²")
                 abertura = st.number_input(f"Área de abertura ({edf_label})", min_value=0.0, key=f"abertura_{edf_data['nome']}", value=0.0)
                 porcentagem = (abertura / area) * 100 if area > 0 else 0
-                st.metric(label=f"Porcentagem de abertura ({edf_label})", value=f"{porcentagem:.2f} %")
                 fator_x = max(largura, altura) / max(1.0, min(largura, altura))
                 valor_tabela = buscar_valor_tabela(porcentagem, fator_x)
                 menor_dim = min(largura, altura)
@@ -409,19 +407,15 @@ if mostrar_campos:
                         largura_a = st.number_input("Largura fachada A (m)", min_value=0.0, key=f"largura_a_{idx}")
                         altura_a = st.number_input("Altura fachada A (m)", min_value=0.0, key=f"altura_a_{idx}")
                         area_a = largura_a * altura_a
-                        st.metric("Área fachada A (m²)", f"{area_a:.2f}")
                         abertura_a = st.number_input("Área de abertura A (m²)", min_value=0.0, key=f"abertura_a_{idx}")
                         porcentagem_a = (abertura_a / area_a) * 100 if area_a > 0 else 0
-                        st.metric("Porcentagem de abertura A", f"{porcentagem_a:.2f} %")
         
                     with col_dim[1]:
                         largura_b = st.number_input("Largura fachada B (m)", min_value=0.0, key=f"largura_b_{idx}")
                         altura_b = st.number_input("Altura fachada B (m)", min_value=0.0, key=f"altura_b_{idx}")
                         area_b = largura_b * altura_b
-                        st.metric("Área fachada B (m²)", f"{area_b:.2f}")
                         abertura_b = st.number_input("Área de abertura B (m²)", min_value=0.0, key=f"abertura_b_{idx}")
                         porcentagem_b = (abertura_b / area_b) * 100 if area_b > 0 else 0
-                        st.metric("Porcentagem de abertura B", f"{porcentagem_b:.2f} %")
         
                     fator_x_a = max(largura_a, altura_a) / max(1.0, min(largura_a, altura_a))
                     fator_x_b = max(largura_b, altura_b) / max(1.0, min(largura_b, altura_b))
