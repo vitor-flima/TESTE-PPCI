@@ -412,5 +412,5 @@ if mostrar_campos:
                     
                                 novas_comparacoes.append(idx)
                     
-                        st.session_state.comparacoes_extra = novas_comparacoes
+            st.session_state.comparacoes_extra = novas_comparacoes
 
