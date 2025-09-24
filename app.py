@@ -72,7 +72,6 @@ def notas_relevantes(resumo, altura):
 modo = st.radio("Como deseja começar?", ["📄 Revisar projeto existente", "🆕 Criar novo projeto"])
 df = pd.DataFrame()
 arquivo = None
-nome_arquivo_entrada = None
 linha_selecionada = None
 mostrar_campos = False
 
@@ -241,6 +240,14 @@ if mostrar_campos:
     # 📎 Seção dos Anexos
     st.markdown("### 📎 Anexos do Projeto")
     
+    num_anexos = st.number_input(
+        "Quantidade de anexos",
+        min_value=0,
+        step=1,
+        value=0,
+        help="Edificações térreas com permanência de pessoas e de uso não residencial."
+    )
+
     anexos = []
     if num_anexos > 0:
         # 🔽 Lista de opções de uso/ocupação
@@ -317,7 +324,7 @@ if mostrar_campos:
             else:
                 return "toda a fachada do edifício"
     
-        # Comparação inicial
+        # Comparações
         col_init = st.columns(2)
         with col_init[0]:
             edf1 = st.selectbox("Edificação 1:", nomes_edificacoes, key="comparacao_edf1_main")
