@@ -122,178 +122,184 @@ if mostrar_campos:
     st.markdown("### 🏢 Levantamento das Edificações do Empreendimento para Distâncias de Isolamento")
     st.markdown("As medidas de segurança podem ser determinadas individualmente para cada edificação, desde que estejam isoladas. Caso contrário, são consideradas como um único edifício.")
 
-    # Torres residenciais
-    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
-    torres = []
+    # ⚡️ NOVA ALTERAÇÃO: Layout com colunas para as quantidades
+    col_qtd_edificacoes, col_qtd_anexos = st.columns(2)
     
-    for i in range(int(num_torres)):
-        st.markdown(f"**Edificação Residencial {i+1}**")
-        
-        # ⚡️ ALTERAÇÃO: Layout com colunas
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
-        
-        with col2:
-            area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}", value=0.0)
+    with col_qtd_edificacoes:
+        num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
+    
+    with col_qtd_anexos:
+        num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1, value=0)
+    
+    # Torres residenciais
+    torres = []
+    if num_torres > 0:
+        st.markdown("### 🏢 Levantamento das Edificações Residenciais")
+        for i in range(int(num_torres)):
+            st.markdown(f"**Edificação Residencial {i+1}**")
             
-        terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
-        
-        if terrea == "Não":
-            um_ap_por_pav = st.radio(f"A edificação {i+1} é de um apartamento por pavimento?", ["Sim", "Não"], key=f"ap_por_pav_{i}")
+            col1, col2 = st.columns(2)
             
-            subsolo_tecnico = st.radio(
-                f"Existe subsolo na edificação {i+1}?",
-                ["Não", "Sim"], key=f"subsolo_tecnico_{i}"
-            )
+            with col1:
+                nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
             
-            if subsolo_tecnico == "Sim":
-                st.markdown(
-                    "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
-                    unsafe_allow_html=True
+            with col2:
+                area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}", value=0.0)
+                
+            terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
+            
+            if terrea == "Não":
+                um_ap_por_pav = st.radio(f"A edificação {i+1} é de um apartamento por pavimento?", ["Sim", "Não"], key=f"ap_por_pav_{i}")
+                
+                subsolo_tecnico = st.radio(
+                    f"Existe subsolo na edificação {i+1}?",
+                    ["Não", "Sim"], key=f"subsolo_tecnico_{i}"
                 )
                 
-                numero_subsolos = st.radio(
-                    f"Quantidade de subsolos na edificação {i+1}?",
-                    ["1", "Mais de 1"], key=f"numero_subsolos_{i}"
-                )
-                
-                if numero_subsolos == "1":
-                    area_subsolo = st.selectbox(
-                        f"Área do subsolo da edificação {i+1}",
-                        ["Menor que 500m²", "Maior que 500m²"], key=f"area_subsolo_{i}"
+                if subsolo_tecnico == "Sim":
+                    st.markdown(
+                        "<span style='color:red'>⚠️ Se tiver mais de 0,006m² por m³ do pavimento ou sua laje de teto estiver acima, em pelo menos, 1,2m do perfil natural em pelo menos um lado, não é subsolo e deve ser considerado na altura</span>",
+                        unsafe_allow_html=True
                     )
-                else:
-                    area_subsolo = "Maior que 500m²"
-                
-                subsolo_ocupado = st.radio(
-                    f"Algum dos dois primeiros subsolos possui ocupação secundária?",
-                    ["Não", "Sim"], key=f"subsolo_ocupado_{i}"
-                )
-                
-                if subsolo_ocupado == "Sim":
-                    subsolo_menor_50 = st.radio(
-                        f"A ocupação secundária tem no máximo 50m² em cada subsolo?",
-                        ["Não", "Sim"], key=f"subsolo_menor_50_{i}"
+                    
+                    numero_subsolos = st.radio(
+                        f"Quantidade de subsolos na edificação {i+1}?",
+                        ["1", "Mais de 1"], key=f"numero_subsolos_{i}"
                     )
+                    
+                    if numero_subsolos == "1":
+                        area_subsolo = st.selectbox(
+                            f"Área do subsolo da edificação {i+1}",
+                            ["Menor que 500m²", "Maior que 500m²"], key=f"area_subsolo_{i}"
+                        )
+                    else:
+                        area_subsolo = "Maior que 500m²"
+                    
+                    subsolo_ocupado = st.radio(
+                        f"Algum dos dois primeiros subsolos possui ocupação secundária?",
+                        ["Não", "Sim"], key=f"subsolo_ocupado_{i}"
+                    )
+                    
+                    if subsolo_ocupado == "Sim":
+                        subsolo_menor_50 = st.radio(
+                            f"A ocupação secundária tem no máximo 50m² em cada subsolo?",
+                            ["Não", "Sim"], key=f"subsolo_menor_50_{i}"
+                        )
+                    else:
+                        subsolo_menor_50 = "Não"
                 else:
+                    numero_subsolos = "0"
+                    area_subsolo = "Menor que 500m²"
+                    subsolo_ocupado = "Não"
                     subsolo_menor_50 = "Não"
+                
+                duplex = st.radio(
+                    f"Existe duplex no último pavimento da edificação {i+1}?",
+                    ["Não", "Sim"], key=f"duplex_{i}"
+                )
+                
+                atico = st.radio(
+                    f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
+                    ["Não", "Sim"], key=f"atico_{i}"
+                )
+                
+                if duplex == "Sim":
+                    parte_superior = "Cota do primeiro pavimento do duplex"
+                else:
+                    parte_superior = "Cota de piso do último pavimento habitado"
+                
+                if subsolo_tecnico == "Não" and subsolo_ocupado == "Não":
+                    parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+                elif subsolo_tecnico == "Sim" and subsolo_ocupado == "Sim" and subsolo_menor_50 == "Não":
+                    parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
+                else:
+                    parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
+                
+                st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
+                
+                altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}", value=0.0)
+            
             else:
+                um_ap_por_pav = None
+                subsolo_tecnico = "Não"
                 numero_subsolos = "0"
                 area_subsolo = "Menor que 500m²"
                 subsolo_ocupado = "Não"
                 subsolo_menor_50 = "Não"
+                duplex = "Não"
+                atico = "Não"
+                altura = 0.0  # valor fixo para térrea
             
-            duplex = st.radio(
-                f"Existe duplex no último pavimento da edificação {i+1}?",
-                ["Não", "Sim"], key=f"duplex_{i}"
-            )
-            
-            atico = st.radio(
-                f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
-                ["Não", "Sim"], key=f"atico_{i}"
-            )
-            
-            # 🔍 Explicação da altura
-            if duplex == "Sim":
-                parte_superior = "Cota do primeiro pavimento do duplex"
-            else:
-                parte_superior = "Cota de piso do último pavimento habitado"
-            
-            if subsolo_tecnico == "Não" and subsolo_ocupado == "Não":
-                parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-            elif subsolo_tecnico == "Sim" and subsolo_ocupado == "Sim" and subsolo_menor_50 == "Não":
-                parte_inferior = "cota de piso do subsolo em que a ocupação secundária ultrapassa 50m²"
-            else:
-                parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
-            
-            st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
-            
-            # 🔢 Campo de entrada da altura — só aparece se não for térrea
-            altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}", value=0.0)
-        
-        else:
-            um_ap_por_pav = None
-            subsolo_tecnico = "Não"
-            numero_subsolos = "0"
-            area_subsolo = "Menor que 500m²"
-            subsolo_ocupado = "Não"
-            subsolo_menor_50 = "Não"
-            duplex = "Não"
-            atico = "Não"
-            altura = 0.0  # valor fixo para térrea
-        
-        torres.append({
-            "nome": nome,
-            "area": area,
-            "altura": altura,
-            "terrea": terrea,
-            "um_ap_por_pav": um_ap_por_pav,
-            "subsolo_tecnico": subsolo_tecnico,
-            "numero_subsolos": numero_subsolos,
-            "area_subsolo": area_subsolo,
-            "subsolo_ocupado": subsolo_ocupado,
-            "subsolo_menor_50": subsolo_menor_50,
-            "duplex": duplex,
-            "atico": atico
-        })
+            torres.append({
+                "nome": nome,
+                "area": area,
+                "altura": altura,
+                "terrea": terrea,
+                "um_ap_por_pav": um_ap_por_pav,
+                "subsolo_tecnico": subsolo_tecnico,
+                "numero_subsolos": numero_subsolos,
+                "area_subsolo": area_subsolo,
+                "subsolo_ocupado": subsolo_ocupado,
+                "subsolo_menor_50": subsolo_menor_50,
+                "duplex": duplex,
+                "atico": atico
+            })
 
     # 📎 Anexos do Projeto
-    st.markdown("### 📎 Anexos do Projeto")
-    num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1, value=0)
-    anexos = []
-    
-    # 🔽 Lista de opções de uso/ocupação
-    opcoes_uso_anexo = [
-        "C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros",
-        "F-6; Clube social e Salão de Festa; Buffets, clubes sociais, bingo, bilhares, tiro ao alvo, boliche",
-        "F-8; Local para refeição; Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas",
-        "G-1; Garagem sem acesso de público e sem abastecimento; Garagens automáticas, com manobristas",
-        "G-2; Garagem com acesso de público e sem abastecimento; Garagens coletivas sem automação",
-        "J-2; Depósito de lixo; Carga geral do decreto de 300 MJ/m²"
-    ]
-    
-    # 🔽 Lista de opções de carga de incêndio
-    opcoes_carga_incendio = [
-        "C-1; Comércio varejista de alimentos; Minimercados, mercearias, armazéns — 300 MJ/m²",
-        "F-8; Cantinas privativas; Serviços de alimentação — 300 MJ/m²",
-        "F-6; Recreação e lazer não especificados; Atividades diversas — 600 MJ/m²",
-        "G-1/G-2; Estacionamento de veículos; Garagens automáticas ou coletivas — 300 MJ/m²",
-        "J-2; Depósito de lixo; Carga geral do decreto — 300 MJ/m²"
-    ]
-    
-    for i in range(int(num_anexos)):
-        st.markdown(f"**Anexo {i+1}**")
+    if num_anexos > 0:
+        st.markdown("### 📎 Anexos do Projeto")
+        anexos = []
         
-        # ⚡️ ALTERAÇÃO: Layout com colunas
-        col_anexo_1, col_anexo_2 = st.columns(2)
+        # 🔽 Lista de opções de uso/ocupação
+        opcoes_uso_anexo = [
+            "C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros",
+            "F-6; Clube social e Salão de Festa; Buffets, clubes sociais, bingo, bilhares, tiro ao alvo, boliche",
+            "F-8; Local para refeição; Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas",
+            "G-1; Garagem sem acesso de público e sem abastecimento; Garagens automáticas, com manobristas",
+            "G-2; Garagem com acesso de público e sem abastecimento; Garagens coletivas sem automação",
+            "J-2; Depósito de lixo; Carga geral do decreto de 300 MJ/m²"
+        ]
         
-        with col_anexo_1:
-            nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
+        # 🔽 Lista de opções de carga de incêndio
+        opcoes_carga_incendio = [
+            "C-1; Comércio varejista de alimentos; Minimercados, mercearias, armazéns — 300 MJ/m²",
+            "F-8; Cantinas privativas; Serviços de alimentação — 300 MJ/m²",
+            "F-6; Recreação e lazer não especificados; Atividades diversas — 600 MJ/m²",
+            "G-1/G-2; Estacionamento de veículos; Garagens automáticas ou coletivas — 300 MJ/m²",
+            "J-2; Depósito de lixo; Carga geral do decreto — 300 MJ/m²"
+        ]
         
-        with col_anexo_2:
-            area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}", value=0.0)
+        for i in range(int(num_anexos)):
+            st.markdown(f"**Anexo {i+1}**")
             
-        col_anexo_3, col_anexo_4 = st.columns(2)
-        
-        with col_anexo_3:
-            uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
-        
-        with col_anexo_4:
-            carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
+            # ⚡️ ALTERAÇÃO: Layout com colunas para os campos dos anexos
+            col_anexo_1, col_anexo_2 = st.columns(2)
             
-        anexos.append({
-            "nome": nome,
-            "area": area,
-            "uso": uso,
-            "carga_incendio": carga,
-            "terrea": "Sim",
-            "um_ap_por_pav": None,
-            "altura": 0.0
-        })
-        
-    st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
+            with col_anexo_1:
+                nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
+            
+            with col_anexo_2:
+                area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}", value=0.0)
+                
+            col_anexo_3, col_anexo_4 = st.columns(2)
+            
+            with col_anexo_3:
+                uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
+            
+            with col_anexo_4:
+                carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
+                
+            anexos.append({
+                "nome": nome,
+                "area": area,
+                "uso": uso,
+                "carga_incendio": carga,
+                "terrea": "Sim",
+                "um_ap_por_pav": None,
+                "altura": 0.0
+            })
+            
+        st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
     
     # 🔀 Bloco de Comparação entre Edificações
     todas_edificacoes = torres + anexos
@@ -426,9 +432,8 @@ if mostrar_campos:
                     st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
                     st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
         
-                    # Botão de remover abaixo do bloco
                     if st.button("❌ Remover comparação", key=f"remover_comparacao_{idx}"):
-                        continue  # ignora esta comparação na próxima lista
+                        continue
             
                     novas_comparacoes.append(idx)
             
