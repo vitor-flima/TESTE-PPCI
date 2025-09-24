@@ -9,6 +9,10 @@ from datetime import datetime
 st.set_page_config(page_title="Gestão de Projetos PPCI", layout="centered")
 st.title("📁 Ferramenta de Projetos PPCI")
 
+# Inicializa o estado da sessão para armazenar as comparações
+if 'comparisons' not in st.session_state:
+    st.session_state.comparisons = []
+
 # 🧠 Funções auxiliares
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
@@ -114,13 +118,11 @@ if mostrar_campos:
     linha_selecionada["UltimaModificacao"] = datetime.now().strftime('%d/%m/%Y %H:%M')
 
     # 🔻 Separação visual destacada
-    st.markdown("---")
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
     
-    # ⚡️ ALTERAÇÃO: Título principal centralizado
+    # 🏢 Seção das Edificações Residenciais
     st.markdown("<h3 style='text-align: center;'>🏢 Levantamento das Edificações e Anexos</h3>", unsafe_allow_html=True)
     
-    # ⚡️ ALTERAÇÃO: Quantidades de edificações e anexos lado a lado
     col_qtd_edificacoes, col_qtd_anexos = st.columns(2)
 
     with col_qtd_edificacoes:
@@ -328,7 +330,7 @@ if mostrar_campos:
             else:
                 return "toda a fachada do edifício"
     
-        # Comparação inicial
+        # Comparações
         col_init = st.columns(2)
         with col_init[0]:
             edf1 = st.selectbox("Edificação 1:", nomes_edificacoes, key="comparacao_edf1_main")
