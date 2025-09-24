@@ -406,11 +406,11 @@ if mostrar_campos:
                                 st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
                                 st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
                 
-                            # Botão de remover abaixo do bloco
-                            if st.button("❌ Remover comparação", key=f"remover_comparacao_{idx}"):
-                                continue  # ignora esta comparação na próxima lista
-                
-                            novas_comparacoes.append(idx)
-                
+                                # Botão de remover abaixo do bloco
+                                if st.button("❌ Remover comparação", key=f"remover_comparacao_{idx}"):
+                                    continue  # ignora esta comparação na próxima lista
+                    
+                                novas_comparacoes.append(idx)
+                    
                         st.session_state.comparacoes_extra = novas_comparacoes
 
