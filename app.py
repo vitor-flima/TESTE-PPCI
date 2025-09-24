@@ -386,7 +386,7 @@ if mostrar_campos:
                     st.session_state.comparacoes_extra = []
                 novo_id = len(st.session_state.comparacoes_extra)
                 st.session_state.comparacoes_extra.append(novo_id)
-    
+            
             # Comparações adicionais
             if "comparacoes_extra" in st.session_state:
                 novas_comparacoes = []
@@ -396,37 +396,27 @@ if mostrar_campos:
                         edf_a = st.selectbox("Edificação A:", nomes_edificacoes, key=f"extra_edf_a_{idx}")
                         edf_b = st.selectbox("Edificação B:", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
             
-                        fachada_a = fachada_edificacao(next((e for e in todas_edificacoes if e["nome"] == edf_a), {}))
-                        fachada_b = fachada_edificacao(next((e for e in todas_edificacoes if e["nome"] == edf_b), {}))
+                        edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
+                        edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
             
-                        if fachada_a == fachada_b:
-                            st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
-                        else:
-                            st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
-                            st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
+                        if edf_a_data and edf_b_data:
+                            fachada_a = fachada_edificacao(edf_a_data)
+                            fachada_b = fachada_edificacao(edf_b_data)
+            
+                            if fachada_a == fachada_b:
+                                st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
+                            else:
+                                st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
+                                st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
             
                         col1, col2 = st.columns([4, 1])
                         with col1:
-                            st.form_submit_button("✅ Manter comparação", use_container_width=True)
+                            manter = st.form_submit_button("✅ Manter comparação", use_container_width=True)
                         with col2:
-                            if st.form_submit_button("❌ Remover", use_container_width=True):
-                                continue  # ignora esta comparação na próxima lista
-                        novas_comparacoes.append(idx)
+                            remover = st.form_submit_button("❌ Remover", use_container_width=True)
+            
+                        if not remover:
+                            novas_comparacoes.append(idx)
             
                 st.session_state.comparacoes_extra = novas_comparacoes
 
-
-
-    
-                    edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
-                    edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
-    
-                    if edf_a_data and edf_b_data:
-                        fachada_a = fachada_edificacao(edf_a_data)
-                        fachada_b = fachada_edificacao(edf_b_data)
-    
-                        if fachada_a == fachada_b:
-                            st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
-                        else:
-                            st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
-                            st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
