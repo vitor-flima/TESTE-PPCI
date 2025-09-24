@@ -117,24 +117,13 @@ if mostrar_campos:
     # 🔻 Separação visual destacada
     st.markdown("---")
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
-
-    # 🏢 Novo título atualizado
-    st.markdown("### 🏢 Levantamento das Edificações do Empreendimento para Distâncias de Isolamento")
-    st.markdown("As medidas de segurança podem ser determinadas individualmente para cada edificação, desde que estejam isoladas. Caso contrário, são consideradas como um único edifício.")
-
-    # ⚡️ NOVA ALTERAÇÃO: Layout com colunas para as quantidades
-    col_qtd_edificacoes, col_qtd_anexos = st.columns(2)
     
-    with col_qtd_edificacoes:
-        num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
+    # 🏢 Seção das Edificações Residenciais (Retângulo Laranja)
+    st.markdown("### 🏢 Levantamento das Edificações Residenciais")
     
-    with col_qtd_anexos:
-        num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1, value=0)
-    
-    # Torres residenciais
+    num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=0)
     torres = []
     if num_torres > 0:
-        st.markdown("### 🏢 Informações das Edificações Residenciais")
         for i in range(int(num_torres)):
             st.markdown(f"**Edificação Residencial {i+1}**")
             
@@ -245,11 +234,19 @@ if mostrar_campos:
                 "atico": atico
             })
 
-    # 📎 Anexos do Projeto
+    # 📎 Seção dos Anexos
+    st.markdown("### 📎 Anexos do Projeto")
+    # ⚡️ ALTERAÇÃO: O aviso agora está na descrição (help) do campo
+    num_anexos = st.number_input(
+        "Quantidade de anexos",
+        min_value=0,
+        step=1,
+        value=0,
+        help="Edificações térreas com permanência de pessoas e de uso não residencial."
+    )
+
+    anexos = []
     if num_anexos > 0:
-        st.markdown("### 📎Informações dos anexos")
-        anexos = []
-        
         # 🔽 Lista de opções de uso/ocupação
         opcoes_uso_anexo = [
             "C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros",
@@ -272,7 +269,6 @@ if mostrar_campos:
         for i in range(int(num_anexos)):
             st.markdown(f"**Anexo {i+1}**")
             
-            # ⚡️ ALTERAÇÃO: Layout com colunas para os campos dos anexos
             col_anexo_1, col_anexo_2 = st.columns(2)
             
             with col_anexo_1:
@@ -299,8 +295,6 @@ if mostrar_campos:
                 "altura": 0.0
             })
             
-        st.markdown("📝 **Anexos:** edificações térreas com permanência de pessoas e de uso não residencial.")
-    
     # 🔀 Bloco de Comparação entre Edificações
     todas_edificacoes = torres + anexos
     if len(todas_edificacoes) > 1:
