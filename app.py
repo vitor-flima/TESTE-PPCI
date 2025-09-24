@@ -134,7 +134,7 @@ if mostrar_campos:
     # Torres residenciais
     torres = []
     if num_torres > 0:
-        st.markdown("### 🏢 Levantamento das Edificações Residenciais")
+        st.markdown("### 🏢 Informações das Edificações Residenciais")
         for i in range(int(num_torres)):
             st.markdown(f"**Edificação Residencial {i+1}**")
             
@@ -247,7 +247,7 @@ if mostrar_campos:
 
     # 📎 Anexos do Projeto
     if num_anexos > 0:
-        st.markdown("### 📎 Anexos do Projeto")
+        st.markdown("### 📎Informações dos anexos")
         anexos = []
         
         # 🔽 Lista de opções de uso/ocupação
