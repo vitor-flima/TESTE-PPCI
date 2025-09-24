@@ -346,6 +346,39 @@ if mostrar_campos:
             # Pergunta do bombeiro
             st.markdown("---")
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
+
+            # Função para buscar valor da tabela com base na % de abertura e fator x
+            def buscar_valor_tabela(porcentagem, fator_x):
+                tabela = {
+                    20: [0.4, 0.4, 0.44, 0.46, 0.48, 0.49, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51],
+                    30: [0.6, 0.66, 0.73, 0.79, 0.84, 0.88, 0.9, 0.92, 0.93, 0.94, 0.94, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
+                    40: [0.8, 0.8, 0.94, 1.02, 1.1, 1.17, 1.23, 1.27, 1.3, 1.32, 1.33, 1.33, 1.34, 1.34, 1.34, 1.34, 1.34],
+                    50: [0.9, 1.0, 1.11, 1.22, 1.33, 1.42, 1.51, 1.58, 1.63, 1.66, 1.69, 1.7, 1.71, 1.71, 1.71, 1.71, 1.71],
+                    60: [1.0, 1.14, 1.26, 1.39, 1.52, 1.64, 1.76, 1.85, 1.93, 1.99, 2.03, 2.05, 2.07, 2.08, 2.08, 2.08, 2.08],
+                    80: [1.2, 1.37, 1.52, 1.68, 1.85, 2.02, 2.18, 2.34, 2.48, 2.59, 2.67, 2.73, 2.77, 2.79, 2.8, 2.81, 2.81],
+                    100: [1.4, 1.56, 1.74, 1.93, 2.13, 2.34, 2.55, 2.76, 2.95, 3.12, 3.26, 3.36, 3.43, 3.48, 3.51, 3.52, 3.53]
+                }
+                valores_x = [1.0, 1.3, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0, 32.0, 40.0]
+                porcentagem_mais_proxima = min(tabela.keys(), key=lambda p: abs(p - porcentagem))
+                indice_x = min(range(len(valores_x)), key=lambda i: abs(valores_x[i] - fator_x))
+                return tabela[porcentagem_mais_proxima][indice_x]
+
+            # Cálculo da distância de isolamento para Edificação 1
+            fator_x_edf1 = max(largura_fachada_edf1, altura_fachada_edf1) / max(1.0, min(largura_fachada_edf1, altura_fachada_edf1))
+            valor_tabela_edf1 = buscar_valor_tabela(porcentagem_abertura_edf1, fator_x_edf1)
+            menor_dim_edf1 = min(largura_fachada_edf1, altura_fachada_edf1)
+            acrescimo_edf1 = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
+            distancia_isolamento_edf1 = (valor_tabela_edf1 * menor_dim_edf1) + acrescimo_edf1
+            st.metric(label="Distância de isolamento (Edificação 1)", value=f"{distancia_isolamento_edf1:.2f} m")
+
+            # Cálculo da distância de isolamento para Edificação 2
+            fator_x_edf2 = max(largura_fachada_edf2, altura_fachada_edf2) / max(1.0, min(largura_fachada_edf2, altura_fachada_edf2))
+            valor_tabela_edf2 = buscar_valor_tabela(porcentagem_abertura_edf2, fator_x_edf2)
+            menor_dim_edf2 = min(largura_fachada_edf2, altura_fachada_edf2)
+            acrescimo_edf2 = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
+            distancia_isolamento_edf2 = (valor_tabela_edf2 * menor_dim_edf2) + acrescimo_edf2
+            st.metric(label="Distância de isolamento (Edificação 2)", value=f"{distancia_isolamento_edf2:.2f} m")
+
     
             # Botão de comparação adicional
             if st.button("➕ Adicionar nova comparação"):
