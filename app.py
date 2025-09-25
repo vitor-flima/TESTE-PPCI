@@ -248,7 +248,7 @@ if mostrar_campos:
         nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
         st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 🔀 Isolamento entre Edificações")
-        st.session_state.bombeiros = st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
+        st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
         col_init = st.columns(2)
         with col_init[0]:
