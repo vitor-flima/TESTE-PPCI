@@ -455,7 +455,8 @@ if mostrar_campos:
     edificacoes_consolidadas = []
     nomes_ja_consolidados = set()
 
-    # Cria uma cópia profunda da lista original para evitar que alterações futuras interfiram no loop
+    # Cria uma cópia da lista original para garantir que as alterações de área sejam visíveis no enquadramento
+    # Usamos list(todas_edificacoes) para criar uma cópia superficial do dicionário de cada edificação
     todas_edificacoes_copia = [e.copy() for e in todas_edificacoes] 
 
     for i, edificacao in enumerate(todas_edificacoes_copia):
@@ -467,23 +468,28 @@ if mostrar_campos:
             if nome_principal and nome_principal not in nomes_ja_consolidados:
                 edificacao_principal = next((t for t in todas_edificacoes_copia if t["nome"] == nome_principal), None)
                 if edificacao_principal:
+                    # Cria uma nova entrada para a edificação principal com a área combinada
                     edificacao_combinada = edificacao_principal.copy()
                     edificacao_combinada['area_original'] = edificacao_principal['area']
                     edificacao_combinada['areas_combinadas_com'] = [nome_principal]
                     
-                    # Soma a área da edificação principal (que é a cópia) com as áreas das que foram anexadas
+                    # Itera novamente para somar as áreas
                     for outra_edificacao in todas_edificacoes_copia:
-                        if outra_edificacao.get("edificacao_conjunta") == nome_principal and outra_edificacao["nome"] != nome_principal:
-                            edificacao_combinada['area'] += outra_edificacao['area']
-                            edificacao_combinada['areas_combinadas_com'].append(outra_edificacao['nome'])
+                        # Verifica se é a edificação anexa e se está ligada à edificação principal
+                        if outra_edificacao.get("edificacao_conjunta") == nome_principal:
+                            # Garante que não some a área da própria edificação principal duplicadamente
+                            if outra_edificacao["nome"] != nome_principal: 
+                                edificacao_combinada['area'] += outra_edificacao['area']
+                                edificacao_combinada['areas_combinadas_com'].append(outra_edificacao['nome'])
                     
                     edificacoes_consolidadas.append(edificacao_combinada)
                     nomes_ja_consolidados.add(nome_principal)
         else:
+            # Tratamento Independente
             edificacoes_consolidadas.append(edificacao)
             nomes_ja_consolidados.add(edificacao["nome"])
 
-    # A lista 'todas_edificacoes' para o bloco de exibição e exportação
+    # Substitui a lista principal pela lista de edificações consolidadas para uso no enquadramento
     todas_edificacoes = edificacoes_consolidadas
     # --- FIM DO BLOCO CORRIGIDO: PREPARAÇÃO DOS DADOS CONSOLIDADOS ---
 
@@ -497,7 +503,7 @@ if mostrar_campos:
             altura_valor = edificacao.get("altura", 0)
             num_pavimentos = edificacao.get("num_pavimentos", 1)
             
-            # Determina se a Tabela Simplificada será usada
+            # Determina se a Tabela Simplificada será usada (Área <= 750 E Altura <= 12)
             is_tabela_simplificada = area_consolidada <= 750 and altura_valor <= 12
 
             resumo = medidas_por_enquadramento(area_consolidada, altura_valor, num_pavimentos)
@@ -507,6 +513,8 @@ if mostrar_campos:
             # -----------------------------------------------
 
             st.markdown("### Tabela de Medidas de Segurança Aplicáveis")
+            # Mostra a área para confirmação durante o teste
+            st.info(f"Área Consolidada utilizada para Enquadramento: **{area_consolidada:.2f} m²**") 
             df_resumo = pd.DataFrame.from_dict(resumo, orient='index', columns=["Aplicação"])
             st.table(df_resumo)
 
