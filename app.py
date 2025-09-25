@@ -201,8 +201,7 @@ if mostrar_campos:
                 
                 duplex = st.radio(
                     f"Existe duplex no último pavimento da edificação {i+1}?",
-                    ["Não", "Sim"], key=f"duplex_{i}"
-                )
+                    ["Não", "Sim"], key=f"duplex_{i}")
                 
                 atico = st.radio(
                     f"Há pavimento de ático/casa de máquinas acima do último pavimento?",
@@ -330,6 +329,37 @@ if mostrar_campos:
             else:
                 return "toda a fachada do edifício"
     
+        def buscar_valor_tabela_anexo(porcentagem):
+            if porcentagem <= 10:
+                return 4
+            elif 10 < porcentagem <= 20:
+                return 5
+            elif 20 < porcentagem <= 30:
+                return 6
+            elif 30 < porcentagem <= 40:
+                return 7
+            elif 40 < porcentagem <= 50:
+                return 8
+            elif 50 < porcentagem <= 70:
+                return 9
+            else:
+                return 10
+    
+        def buscar_valor_tabela(porcentagem, fator_x):
+            tabela = {
+                20: [0.4, 0.4, 0.44, 0.46, 0.48, 0.49, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51],
+                30: [0.6, 0.66, 0.73, 0.79, 0.84, 0.88, 0.9, 0.92, 0.93, 0.94, 0.94, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
+                40: [0.8, 0.8, 0.94, 1.02, 1.1, 1.17, 1.23, 1.27, 1.3, 1.32, 1.33, 1.33, 1.34, 1.34, 1.34, 1.34, 1.34],
+                50: [0.9, 1.0, 1.11, 1.22, 1.33, 1.42, 1.51, 1.58, 1.63, 1.66, 1.69, 1.7, 1.71, 1.71, 1.71, 1.71, 1.71],
+                60: [1.0, 1.14, 1.26, 1.39, 1.52, 1.64, 1.76, 1.85, 1.93, 1.99, 2.03, 2.05, 2.07, 2.08, 2.08, 2.08, 2.08],
+                80: [1.2, 1.37, 1.52, 1.68, 1.85, 2.02, 2.18, 2.34, 2.48, 2.59, 2.67, 2.73, 2.77, 2.79, 2.8, 2.81, 2.81],
+                100: [1.4, 1.56, 1.74, 1.93, 2.13, 2.34, 2.55, 2.76, 2.95, 3.12, 3.26, 3.36, 3.43, 3.48, 3.51, 3.52, 3.53]
+            }
+            valores_x = [1.0, 1.3, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0, 32.0, 40.0]
+            porcentagem_mais_proxima = min(tabela.keys(), key=lambda p: abs(p - porcentagem))
+            indice_x = min(range(len(valores_x)), key=lambda i: abs(valores_x[i] - fator_x))
+            return tabela[porcentagem_mais_proxima][indice_x]
+
         # Comparações
         col_init = st.columns(2)
         with col_init[0]:
@@ -343,35 +373,43 @@ if mostrar_campos:
         if edf1_data and edf2_data:
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
     
-            def buscar_valor_tabela(porcentagem, fator_x):
-                tabela = {
-                    20: [0.4, 0.4, 0.44, 0.46, 0.48, 0.49, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51],
-                    30: [0.6, 0.66, 0.73, 0.79, 0.84, 0.88, 0.9, 0.92, 0.93, 0.94, 0.94, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
-                    40: [0.8, 0.8, 0.94, 1.02, 1.1, 1.17, 1.23, 1.27, 1.3, 1.32, 1.33, 1.33, 1.34, 1.34, 1.34, 1.34, 1.34],
-                    50: [0.9, 1.0, 1.11, 1.22, 1.33, 1.42, 1.51, 1.58, 1.63, 1.66, 1.69, 1.7, 1.71, 1.71, 1.71, 1.71, 1.71],
-                    60: [1.0, 1.14, 1.26, 1.39, 1.52, 1.64, 1.76, 1.85, 1.93, 1.99, 2.03, 2.05, 2.07, 2.08, 2.08, 2.08, 2.08],
-                    80: [1.2, 1.37, 1.52, 1.68, 1.85, 2.02, 2.18, 2.34, 2.48, 2.59, 2.67, 2.73, 2.77, 2.79, 2.8, 2.81, 2.81],
-                    100: [1.4, 1.56, 1.74, 1.93, 2.13, 2.34, 2.55, 2.76, 2.95, 3.12, 3.26, 3.36, 3.43, 3.48, 3.51, 3.52, 3.53]
-                }
-                valores_x = [1.0, 1.3, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0, 32.0, 40.0]
-                porcentagem_mais_proxima = min(tabela.keys(), key=lambda p: abs(p - porcentagem))
-                indice_x = min(range(len(valores_x)), key=lambda i: abs(valores_x[i] - fator_x))
-                return tabela[porcentagem_mais_proxima][indice_x]
+            # Lógica para a Edificação 1
+            st.markdown(f"**Fachada a usar na comparação (Edificação 1 - {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
+            largura1 = st.number_input(f"Largura da fachada (Edificação 1)", min_value=0.0, key=f"largura_{edf1_data['nome']}", value=0.0)
+            altura1 = st.number_input(f"Altura da fachada (Edificação 1)", min_value=0.0, key=f"altura_{edf1_data['nome']}", value=0.0)
+            area1 = largura1 * altura1
+            abertura1 = st.number_input(f"Área de abertura (Edificação 1)", min_value=0.0, key=f"abertura_{edf1_data['nome']}", value=0.0)
+            porcentagem1 = (abertura1 / area1) * 100 if area1 > 0 else 0
+            fator_x1 = max(largura1, altura1) / max(1.0, min(largura1, altura1))
+            valor_tabela1 = buscar_valor_tabela(porcentagem1, fator_x1)
+            menor_dim1 = min(largura1, altura1)
+            acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
+            distancia1 = (valor_tabela1 * menor_dim1) + acrescimo
+            
+            # Aplica a regra para anexos
+            if "uso" in edf1_data:
+                distancia_tabela_anexo1 = buscar_valor_tabela_anexo(porcentagem1)
+                distancia1 = min(distancia1, distancia_tabela_anexo1)
+            st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"{distancia1:.2f} m")
     
-            for edf_label, edf_data in [("Edificação 1", edf1_data), ("Edificação 2", edf2_data)]:
-                st.markdown(f"**Fachada a usar na comparação ({edf_label} - {edf_data['nome']}):** {fachada_edificacao(edf_data)}")
-                largura = st.number_input(f"Largura da fachada ({edf_label})", min_value=0.0, key=f"largura_{edf_data['nome']}", value=0.0)
-                altura = st.number_input(f"Altura da fachada ({edf_label})", min_value=0.0, key=f"altura_{edf_data['nome']}", value=0.0)
-                area = largura * altura
-                abertura = st.number_input(f"Área de abertura ({edf_label})", min_value=0.0, key=f"abertura_{edf_data['nome']}", value=0.0)
-                porcentagem = (abertura / area) * 100 if area > 0 else 0
-                fator_x = max(largura, altura) / max(1.0, min(largura, altura))
-                valor_tabela = buscar_valor_tabela(porcentagem, fator_x)
-                menor_dim = min(largura, altura)
-                acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
-                distancia = (valor_tabela * menor_dim) + acrescimo
-                st.metric(label=f"Distância de isolamento ({edf_label})", value=f"{distancia:.2f} m")
-    
+            # Lógica para a Edificação 2
+            st.markdown(f"**Fachada a usar na comparação (Edificação 2 - {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
+            largura2 = st.number_input(f"Largura da fachada (Edificação 2)", min_value=0.0, key=f"largura_{edf2_data['nome']}", value=0.0)
+            altura2 = st.number_input(f"Altura da fachada (Edificação 2)", min_value=0.0, key=f"altura_{edf2_data['nome']}", value=0.0)
+            area2 = largura2 * altura2
+            abertura2 = st.number_input(f"Área de abertura (Edificação 2)", min_value=0.0, key=f"abertura_{edf2_data['nome']}", value=0.0)
+            porcentagem2 = (abertura2 / area2) * 100 if area2 > 0 else 0
+            fator_x2 = max(largura2, altura2) / max(1.0, min(largura2, altura2))
+            valor_tabela2 = buscar_valor_tabela(porcentagem2, fator_x2)
+            menor_dim2 = min(largura2, altura2)
+            distancia2 = (valor_tabela2 * menor_dim2) + acrescimo
+
+            # Aplica a regra para anexos
+            if "uso" in edf2_data:
+                distancia_tabela_anexo2 = buscar_valor_tabela_anexo(porcentagem2)
+                distancia2 = min(distancia2, distancia_tabela_anexo2)
+            st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"{distancia2:.2f} m")
+
         # Comparações adicionais
         if st.button("➕ Adicionar nova comparação"):
             if "comparacoes_extra" not in st.session_state:
@@ -426,6 +464,12 @@ if mostrar_campos:
                     acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
                     dist_a = (valor_a * menor_dim_a) + acrescimo
                     dist_b = (valor_b * menor_dim_b) + acrescimo
+
+                    # Aplica a regra para anexos
+                    if "uso" in edf_a_data:
+                        dist_a = min(dist_a, buscar_valor_tabela_anexo(porcentagem_a))
+                    if "uso" in edf_b_data:
+                        dist_b = min(dist_b, buscar_valor_tabela_anexo(porcentagem_b))
         
                     st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
                     st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
