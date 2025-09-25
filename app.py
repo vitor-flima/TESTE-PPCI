@@ -29,7 +29,6 @@ def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     return novo_nome
 
 def faixa_altura(h):
-    # Função para determinar a faixa de altura (usada na Tabela Completa)
     if h == 0:
         return "Térrea"
     elif h < 6:
@@ -70,8 +69,8 @@ def medidas_tabela_simplificada(num_pavimentos):
     iluminacao_aplicavel = "X" if num_pavimentos > 2 else "-"
 
     tabela = {
-        "Acesso de Viatura na Edificação": ["X"], # Sempre aplicável por ser A-2
-        "Segurança Estrutural contra Incêndio": ["X"], # Sempre aplicável por ser A-2
+        "Acesso de Viatura na Edificação": ["X"], 
+        "Segurança Estrutural contra Incêndio": ["X"], 
         "Compartimentação Horizontal ou de Área": ["X⁴"],
         "Compartimentação de Verticais": ["-"],
         "Controle de Materiais de Acabamento": ["-"],
@@ -83,7 +82,6 @@ def medidas_tabela_simplificada(num_pavimentos):
         "Extintores": ["X"],
         "Hidrantes e Mangotinhos": ["-"]
     }
-    # Retorna o dicionário de medidas simplificadas (a coluna [0])
     return {medida: tabela[medida][0] for medida in tabela}
 
 def medidas_por_enquadramento(area_consolidada, altura, num_pavimentos):
@@ -101,7 +99,6 @@ def medidas_por_enquadramento(area_consolidada, altura, num_pavimentos):
 def notas_relevantes(resumo, altura, num_pavimentos, is_tabela_simplificada):
     notas = []
     
-    # Notas da Tabela Completa (usadas se a tabela completa foi aplicada)
     if not is_tabela_simplificada:
         if altura >= 80:
             notas.append("1 – Deve haver Elevador de Emergência para altura maior que 80 m")
@@ -112,9 +109,7 @@ def notas_relevantes(resumo, altura, num_pavimentos, is_tabela_simplificada):
         if any("X⁴" in v for v in resumo.values()):
             notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
 
-    # Nota Específica da Tabela Simplificada (adaptada)
     if is_tabela_simplificada and resumo.get("Iluminação de Emergência") == "X":
-        # Nota 5 para a Iluminação de Emergência na Tabela Simplificada
         notas.append("5 – Iluminação de Emergência: Somente para as edificações com mais de dois pavimentos (regra simplificada).")
         
     return notas
@@ -296,7 +291,6 @@ if mostrar_campos:
         st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 🔀 Isolamento entre Edificações")
         
-        # O Streamlit já gerencia a key="bombeiros" no st.session_state
         st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
         col_init = st.columns(2)
@@ -400,11 +394,8 @@ if mostrar_campos:
                     dist_a = (valor_a * menor_dim_a) + acrescimo
                     dist_b = (valor_b * menor_dim_b) + acrescimo
             
-                    # CORREÇÃO DE SINTAXE APLICADA AQUI (edf_a_data)
                     if "uso" in edf_a_data or (edf_a_data.get('terrea') == "Sim" and edf_a_data.get('area') <= 750) or (edf_a_data.get('terrea') == "Não" and edf_a_data.get('area') <= 750 and edf_a_data.get('altura') < 12):
                         dist_a = min(dist_a, buscar_valor_tabela_simplificada(porcentagem_a, edf_a_data.get('num_pavimentos', 1)))
-                    
-                    # CORREÇÃO DE SINTAXE APLICADA AQUI (edf_b_data)
                     if "uso" in edf_b_data or (edf_b_data.get('terrea') == "Sim" and edf_b_data.get('area') <= 750) or (edf_b_data.get('terrea') == "Não" and edf_b_data.get('area') <= 750 and edf_b_data.get('altura') < 12):
                         dist_b = min(dist_b, buscar_valor_tabela_simplificada(porcentagem_b, edf_b_data.get('num_pavimentos', 1)))
             
@@ -455,29 +446,34 @@ if mostrar_campos:
         st.markdown("### 📝 Comentários sobre Isolamento de Risco")
         st.text_area("Insira aqui suas observações sobre a análise de isolamento de risco.", key="comentario_isolamento_geral")
 
+    # --- INÍCIO DO BLOCO CORRIGIDO: PREPARAÇÃO DOS DADOS CONSOLIDADOS ---
     # 🧯 Tabela resumo de medidas de segurança e Detalhamento por medida de segurança
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
     st.markdown("## 🔍 Medidas de Segurança por Edificação")
     
-    # Consolida as áreas e informações das edificações antes da exibição e exportação
+    # Consolida as áreas e informações das edificações ANTES de aplicar as medidas
     edificacoes_consolidadas = []
     nomes_ja_consolidados = set()
 
-    for i, edificacao in enumerate(todas_edificacoes):
+    # Cria uma cópia profunda da lista original para evitar que alterações futuras interfiram no loop
+    todas_edificacoes_copia = [e.copy() for e in todas_edificacoes] 
+
+    for i, edificacao in enumerate(todas_edificacoes_copia):
         if edificacao["nome"] in nomes_ja_consolidados:
             continue
 
         if edificacao.get("tratamento") == "Conjunta":
             nome_principal = edificacao.get("edificacao_conjunta")
             if nome_principal and nome_principal not in nomes_ja_consolidados:
-                edificacao_principal = next((t for t in todas_edificacoes if t["nome"] == nome_principal), None)
+                edificacao_principal = next((t for t in todas_edificacoes_copia if t["nome"] == nome_principal), None)
                 if edificacao_principal:
                     edificacao_combinada = edificacao_principal.copy()
                     edificacao_combinada['area_original'] = edificacao_principal['area']
                     edificacao_combinada['areas_combinadas_com'] = [nome_principal]
                     
-                    for outra_edificacao in todas_edificacoes:
-                        if outra_edificacao.get("edificacao_conjunta") == nome_principal:
+                    # Soma a área da edificação principal (que é a cópia) com as áreas das que foram anexadas
+                    for outra_edificacao in todas_edificacoes_copia:
+                        if outra_edificacao.get("edificacao_conjunta") == nome_principal and outra_edificacao["nome"] != nome_principal:
                             edificacao_combinada['area'] += outra_edificacao['area']
                             edificacao_combinada['areas_combinadas_com'].append(outra_edificacao['nome'])
                     
@@ -487,7 +483,9 @@ if mostrar_campos:
             edificacoes_consolidadas.append(edificacao)
             nomes_ja_consolidados.add(edificacao["nome"])
 
+    # A lista 'todas_edificacoes' para o bloco de exibição e exportação
     todas_edificacoes = edificacoes_consolidadas
+    # --- FIM DO BLOCO CORRIGIDO: PREPARAÇÃO DOS DADOS CONSOLIDADOS ---
 
     if todas_edificacoes:
         for i, edificacao in enumerate(todas_edificacoes):
@@ -495,7 +493,7 @@ if mostrar_campos:
             st.markdown(f"### 🏢 {nome_edificacao}")
 
             # --- Aplica a lógica de enquadramento completa ---
-            area_consolidada = edificacao.get("area", 0)
+            area_consolidada = edificacao.get("area", 0) # Usa a área JÁ CONSOLIDADA
             altura_valor = edificacao.get("altura", 0)
             num_pavimentos = edificacao.get("num_pavimentos", 1)
             
@@ -590,7 +588,6 @@ if mostrar_campos:
 
             # Detalhamento para outras medidas
             for medida, aplicacao in resumo.items():
-                # Exibe o detalhamento se a medida for aplicável ('X', 'X²', etc.) e não for uma das medidas já detalhadas acima
                 if aplicacao != "-" and medida not in ["Acesso de Viatura na Edificação", "Segurança Estrutural contra Incêndio"]:
                     with st.expander(f"🔹 {medida} - {nome_edificacao}"):
                         st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
