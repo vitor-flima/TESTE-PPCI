@@ -455,41 +455,38 @@ if mostrar_campos:
     edificacoes_consolidadas = []
     nomes_ja_consolidados = set()
 
-    # Cria uma cópia da lista original para garantir que as alterações de área sejam visíveis no enquadramento
-    # Usamos list(todas_edificacoes) para criar uma cópia superficial do dicionário de cada edificação
+    # CRIA UMA CÓPIA LIMPA DO ESTADO ATUAL ANTES DE CONSOLIDAR
     todas_edificacoes_copia = [e.copy() for e in todas_edificacoes] 
 
-    for i, edificacao in enumerate(todas_edificacoes_copia):
-        if edificacao["nome"] in nomes_ja_consolidados:
-            continue
-
-        if edificacao.get("tratamento") == "Conjunta":
-            nome_principal = edificacao.get("edificacao_conjunta")
-            if nome_principal and nome_principal not in nomes_ja_consolidados:
-                edificacao_principal = next((t for t in todas_edificacoes_copia if t["nome"] == nome_principal), None)
-                if edificacao_principal:
-                    # Cria uma nova entrada para a edificação principal com a área combinada
-                    edificacao_combinada = edificacao_principal.copy()
-                    edificacao_combinada['area_original'] = edificacao_principal['area']
-                    edificacao_combinada['areas_combinadas_com'] = [nome_principal]
-                    
-                    # Itera novamente para somar as áreas
-                    for outra_edificacao in todas_edificacoes_copia:
-                        # Verifica se é a edificação anexa e se está ligada à edificação principal
-                        if outra_edificacao.get("edificacao_conjunta") == nome_principal:
-                            # Garante que não some a área da própria edificação principal duplicadamente
-                            if outra_edificacao["nome"] != nome_principal: 
-                                edificacao_combinada['area'] += outra_edificacao['area']
-                                edificacao_combinada['areas_combinadas_com'].append(outra_edificacao['nome'])
-                    
-                    edificacoes_consolidadas.append(edificacao_combinada)
-                    nomes_ja_consolidados.add(nome_principal)
-        else:
-            # Tratamento Independente
-            edificacoes_consolidadas.append(edificacao)
+    # Primeiro, identificamos quais são as edificações principais que receberão área
+    for edificacao in todas_edificacoes_copia:
+        
+        # Se for uma edificação independente, ou se for a edificação principal de um grupo (torre)
+        is_principal = (edificacao.get("tratamento") != "Conjunta") or \
+                       (edificacao.get("tratamento") == "Conjunta" and edificacao.get("nome") == edificacao.get("edificacao_conjunta"))
+        
+        if is_principal and edificacao["nome"] not in nomes_ja_consolidados:
+            edificacao_combinada = edificacao.copy()
+            edificacao_combinada['area_original'] = edificacao['area']
+            edificacao_combinada['areas_combinadas_com'] = [edificacao["nome"]]
+            
+            area_total_combinada = edificacao['area']
+            
+            # Soma as áreas das outras edificações que a ela se ligam
+            for outra_edificacao in todas_edificacoes_copia:
+                if outra_edificacao["nome"] != edificacao["nome"] and \
+                   outra_edificacao.get("tratamento") == "Conjunta" and \
+                   outra_edificacao.get("edificacao_conjunta") == edificacao["nome"]:
+                       
+                       area_total_combinada += outra_edificacao['area']
+                       edificacao_combinada['areas_combinadas_com'].append(outra_edificacao['nome'])
+                       
+            edificacao_combinada['area'] = area_total_combinada
+            
+            edificacoes_consolidadas.append(edificacao_combinada)
             nomes_ja_consolidados.add(edificacao["nome"])
 
-    # Substitui a lista principal pela lista de edificações consolidadas para uso no enquadramento
+    # SUBSTITUIÇÃO CRÍTICA: A lista principal 'todas_edificacoes' agora é a lista consolidada.
     todas_edificacoes = edificacoes_consolidadas
     # --- FIM DO BLOCO CORRIGIDO: PREPARAÇÃO DOS DADOS CONSOLIDADOS ---
 
