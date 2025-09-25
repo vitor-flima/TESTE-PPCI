@@ -17,7 +17,8 @@ if 'comparacoes_extra' not in st.session_state:
 if 'bombeiros' not in st.session_state:
     st.session_state.bombeiros = "Sim"
 
-# 🧠 Funções auxiliares (funções do código antigo e novo consolidadas)
+# 🧠 Funções auxiliares
+
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
         match = re.search(r"-R(\d+)", nome_arquivo_entrada)
@@ -28,6 +29,7 @@ def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     return novo_nome
 
 def faixa_altura(h):
+    # Função para determinar a faixa de altura (usada na Tabela Completa)
     if h == 0:
         return "Térrea"
     elif h < 6:
@@ -41,7 +43,8 @@ def faixa_altura(h):
     else:
         return "Acima de 30 m"
 
-def medidas_por_faixa(faixa):
+def medidas_tabela_completa(faixa):
+    # Tabela de medidas de segurança para edificações de MAIOR risco (Área > 750m² OU Altura > 12m)
     tabela = {
         "Acesso de Viatura na Edificação": ["X"] * 6,
         "Segurança Estrutural contra Incêndio": ["X"] * 6,
@@ -60,16 +63,60 @@ def medidas_por_faixa(faixa):
     idx = faixas.index(faixa)
     return {medida: tabela[medida][idx] for medida in tabela}
 
-def notas_relevantes(resumo, altura):
+def medidas_tabela_simplificada(num_pavimentos):
+    # Tabela de medidas de segurança para edificações de MENOR risco (Área <= 750m² E Altura <= 12m)
+    
+    # Regra da Nota 1: Iluminação de Emergência exige mais de 2 pavimentos (num_pavimentos > 2)
+    iluminacao_aplicavel = "X" if num_pavimentos > 2 else "-"
+
+    tabela = {
+        "Acesso de Viatura na Edificação": ["X"], # Sempre aplicável por ser A-2
+        "Segurança Estrutural contra Incêndio": ["X"], # Sempre aplicável por ser A-2
+        "Compartimentação Horizontal ou de Área": ["X⁴"],
+        "Compartimentação de Verticais": ["-"],
+        "Controle de Materiais de Acabamento": ["-"],
+        "Saídas de Emergência": ["X"],
+        "Brigada de Incêndio": ["-"],
+        "Iluminação de Emergência": [iluminacao_aplicavel],
+        "Alarme de Incêndio": ["X³"],
+        "Sinalização de Emergência": ["X"],
+        "Extintores": ["X"],
+        "Hidrantes e Mangotinhos": ["-"]
+    }
+    # Retorna o dicionário de medidas simplificadas (a coluna [0])
+    return {medida: tabela[medida][0] for medida in tabela}
+
+def medidas_por_enquadramento(area_consolidada, altura, num_pavimentos):
+    """Determina o conjunto de medidas de segurança com base na área e altura."""
+    
+    # 1. ENQUADRAMENTO COMPLETO (Maior Risco):
+    if area_consolidada > 750 or altura > 12:
+        faixa = faixa_altura(altura)
+        return medidas_tabela_completa(faixa)
+    else:
+        # 2. ENQUADRAMENTO SIMPLIFICADO (Menor Risco):
+        return medidas_tabela_simplificada(num_pavimentos)
+
+
+def notas_relevantes(resumo, altura, num_pavimentos, is_tabela_simplificada):
     notas = []
-    if altura >= 80:
-        notas.append("1 – Deve haver Elevador de Emergência para altura maior que 80 m")
-    if any("X²" in v for v in resumo.values()):
-        notas.append("2 – Pode ser substituída por sistema de controle de fumaça somente nos átrios")
-    if any("X³" in v for v in resumo.values()):
-        notas.append("3 – O sistema de alarme pode ser setorizado na central junto à portaria, desde que tenha vigilância 24 horas")
-    if any("X⁴" in v for v in resumo.values()):
-        notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
+    
+    # Notas da Tabela Completa (usadas se a tabela completa foi aplicada)
+    if not is_tabela_simplificada:
+        if altura >= 80:
+            notas.append("1 – Deve haver Elevador de Emergência para altura maior que 80 m")
+        if any("X²" in v for v in resumo.values()):
+            notas.append("2 – Pode ser substituída por sistema de controle de fumaça somente nos átrios")
+        if any("X³" in v for v in resumo.values()):
+            notas.append("3 – O sistema de alarme pode ser setorizado na central junto à portaria, desde que tenha vigilância 24 horas")
+        if any("X⁴" in v for v in resumo.values()):
+            notas.append("4 – Devem ser atendidas somente as regras específicas de compartimentação entre unidades autônomas")
+
+    # Nota Específica da Tabela Simplificada (adaptada)
+    if is_tabela_simplificada and resumo.get("Iluminação de Emergência") == "X":
+        # Nota 5 apenas para a Iluminação de Emergência na Tabela Simplificada
+        notas.append("5 – Iluminação de Emergência: Somente para as edificações com mais de dois pavimentos (regra simplificada).")
+        
     return notas
 
 def fachada_edificacao(edf):
@@ -153,7 +200,7 @@ elif modo == "🆕 Criar novo projeto":
     st.success("Novo projeto iniciado. Preencha os dados abaixo.")
     mostrar_campos = True
 
-# 🏗️ Levantamento das edificações (Novo código)
+# 🏗️ Levantamento das edificações
 if mostrar_campos:
     st.markdown("### 🧾 Versão do Projeto")
     linha_selecionada["NomeProjeto"] = st.text_input("Nome do Projeto", value=linha_selecionada.get("NomeProjeto", ""))
@@ -248,6 +295,8 @@ if mostrar_campos:
         nomes_edificacoes = [e["nome"] for e in todas_edificacoes if e["nome"]]
         st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 🔀 Isolamento entre Edificações")
+        
+        # CORREÇÃO APLICADA AQUI: Removida atribuição direta à st.session_state no st.radio
         st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
         col_init = st.columns(2)
@@ -353,7 +402,7 @@ if mostrar_campos:
             
                     if "uso" in edf_a_data or (edf_a_data.get('terrea') == "Sim" and edf_a_data.get('area') <= 750) or (edf_a_data.get('terrea') == "Não" and edf_a_data.get('area') <= 750 and edf_a_data.get('altura') < 12):
                         dist_a = min(dist_a, buscar_valor_tabela_simplificada(porcentagem_a, edf_a_data.get('num_pavimentos', 1)))
-                    if "uso" in edf_b_data or (edf_b_data.get('terrea') == "Sim" and edf_b_data.get('area') <= 750) or (edf_b_data.get('terrea') == "Não" and edf_b_data.get('area') <= 750 and edf_b_data.get('altura') < 12):
+                    if "uso" in edf_b_data or (edf_b_data.get('terrea') == "Sim" and edf_b_data.get('area') <= 750) or (edf_b_data.get('terrea') == "Não" and edf_b_data.get('area'] <= 750 and edf_b_data.get('altura') < 12):
                         dist_b = min(dist_b, buscar_valor_tabela_simplificada(porcentagem_b, edf_b_data.get('num_pavimentos', 1)))
             
                     st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
@@ -366,12 +415,11 @@ if mostrar_campos:
                     novas_comparacoes.append(idx)
             st.session_state.comparacoes_extra = novas_comparacoes
 
-    # --- INÍCIO: NOVO BLOCO DE LÓGICA DE ISOLAMENTO ---
+    # Definição de Tratamento (Independente/Conjunto) - PÓS ANÁLISE DE ISOLAMENTO
     if len(todas_edificacoes) > 1:
         st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 🔀 Definição de Tratamento por Edificação")
         
-        # Filtra apenas as edificações residenciais (torres) para o seletor de "conjunta"
         nomes_torres = [t['nome'] for t in torres if t['nome']]
 
         for i, edificacao in enumerate(todas_edificacoes):
@@ -403,7 +451,6 @@ if mostrar_campos:
         st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 📝 Comentários sobre Isolamento de Risco")
         st.text_area("Insira aqui suas observações sobre a análise de isolamento de risco.", key="comentario_isolamento_geral")
-    # --- FIM: NOVO BLOCO DE LÓGICA DE ISOLAMENTO ---
 
     # 🧯 Tabela resumo de medidas de segurança e Detalhamento por medida de segurança
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
@@ -411,8 +458,6 @@ if mostrar_campos:
     
     # Consolida as áreas e informações das edificações antes da exibição e exportação
     edificacoes_consolidadas = []
-    
-    # Dicionário para rastrear as edificações já incluídas para evitar duplicidade
     nomes_ja_consolidados = set()
 
     for i, edificacao in enumerate(todas_edificacoes):
@@ -424,7 +469,6 @@ if mostrar_campos:
             if nome_principal and nome_principal not in nomes_ja_consolidados:
                 edificacao_principal = next((t for t in todas_edificacoes if t["nome"] == nome_principal), None)
                 if edificacao_principal:
-                    # Cria uma nova entrada para a edificação principal com a área combinada
                     edificacao_combinada = edificacao_principal.copy()
                     edificacao_combinada['area_original'] = edificacao_principal['area']
                     edificacao_combinada['areas_combinadas_com'] = [nome_principal]
@@ -437,7 +481,6 @@ if mostrar_campos:
                     edificacoes_consolidadas.append(edificacao_combinada)
                     nomes_ja_consolidados.add(nome_principal)
         else:
-            # Tratamento Independente
             edificacoes_consolidadas.append(edificacao)
             nomes_ja_consolidados.add(edificacao["nome"])
 
@@ -448,11 +491,20 @@ if mostrar_campos:
             nome_edificacao = edificacao.get("nome", f"Edificação {i+1}")
             st.markdown(f"### 🏢 {nome_edificacao}")
 
+            # --- Aplica a lógica de enquadramento completa ---
+            area_consolidada = edificacao.get("area", 0)
             altura_valor = edificacao.get("altura", 0)
-            faixa = faixa_altura(altura_valor)
-            resumo = medidas_por_faixa(faixa)
-            notas = notas_relevantes(resumo, altura_valor)
+            num_pavimentos = edificacao.get("num_pavimentos", 1)
             
+            # Determina se a Tabela Simplificada será usada
+            is_tabela_simplificada = area_consolidada <= 750 and altura_valor <= 12
+
+            resumo = medidas_por_enquadramento(area_consolidada, altura_valor, num_pavimentos)
+            
+            # Passa a informação se é a tabela simplificada para a função de notas
+            notas = notas_relevantes(resumo, altura_valor, num_pavimentos, is_tabela_simplificada)
+            # -----------------------------------------------
+
             st.markdown("### Tabela de Medidas de Segurança Aplicáveis")
             df_resumo = pd.DataFrame.from_dict(resumo, orient='index', columns=["Aplicação"])
             st.table(df_resumo)
@@ -481,6 +533,7 @@ if mostrar_campos:
                     mostrar_trrf_adotado = False
                     
                     if edificacao.get("terrea") == "Sim":
+                        # Lógica para Térreas
                         resposta_estrutura_terrea = st.radio(
                             "Há algum elemento estrutural que seu colapso comprometa a estabilidade de elementos de compartimentação ou isolamento?",
                             ["Não", "Sim"], key=f"estrutura_terrea_{i}"
@@ -493,7 +546,8 @@ if mostrar_campos:
                             resposta_trrf = "✅ A edificação está isenta de comprovação de TRRF para elementos estruturais."
                             st.markdown(resposta_trrf)
                     else:
-                        area = edificacao.get("area", 0)
+                        # Lógica para Não Térreas (usa a área CONSOLIDADA)
+                        area = area_consolidada # Usando a área consolidada
                         subsolo_tecnico = edificacao.get("subsolo_tecnico", "Não")
                         numero_subsolos = edificacao.get("numero_subsolos", "0")
                         area_subsolo = edificacao.get("area_subsolo", "Menor que 500m²")
@@ -527,13 +581,14 @@ if mostrar_campos:
                         
                     if mostrar_trrf_adotado:
                         if "Cada pavimento deverá apresentar comprovação de TRRF" in resposta_trrf or "subsolo(s) deverão apresentar comprovação de TRRF" in resposta_trrf:
-                            st.image("imagens/Tempos requeridos de resistência ao fogo.png", use_container_width=True)
+                            st.markdown("*(Referência: Imagem da tabela de Tempos requeridos de resistência ao fogo)*")
                         st.text_area("TRRF adotado:", value="", key=f"trrf_adotado_{i}")
                     st.text_area("Observações sobre segurança estrutural", value="", key=f"comentario_estrutural_{i}")
 
             # Detalhamento para outras medidas
             for medida, aplicacao in resumo.items():
-                if "X" in aplicacao and medida not in ["Acesso de Viatura na Edificação", "Segurança Estrutural contra Incêndio"]:
+                # Exibe o detalhamento se a medida for aplicável ('X', 'X²', etc.) e não for uma das medidas já detalhadas acima
+                if aplicacao != "-" and medida not in ["Acesso de Viatura na Edificação", "Segurança Estrutural contra Incêndio"]:
                     with st.expander(f"🔹 {medida} - {nome_edificacao}"):
                         st.markdown(f"Conteúdo técnico sobre **{medida.lower()}**...")
                         if "¹" in aplicacao: st.markdown("📌 Observação especial: ver nota 1")
