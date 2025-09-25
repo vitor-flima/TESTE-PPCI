@@ -114,7 +114,7 @@ def notas_relevantes(resumo, altura, num_pavimentos, is_tabela_simplificada):
 
     # Nota Específica da Tabela Simplificada (adaptada)
     if is_tabela_simplificada and resumo.get("Iluminação de Emergência") == "X":
-        # Nota 5 apenas para a Iluminação de Emergência na Tabela Simplificada
+        # Nota 5 para a Iluminação de Emergência na Tabela Simplificada
         notas.append("5 – Iluminação de Emergência: Somente para as edificações com mais de dois pavimentos (regra simplificada).")
         
     return notas
@@ -296,7 +296,7 @@ if mostrar_campos:
         st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 🔀 Isolamento entre Edificações")
         
-        # CORREÇÃO APLICADA AQUI: Removida atribuição direta à st.session_state no st.radio
+        # O Streamlit já gerencia a key="bombeiros" no st.session_state
         st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
         col_init = st.columns(2)
@@ -311,7 +311,7 @@ if mostrar_campos:
         if edf1_data and edf2_data:
             acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
             
-            # Cálculo para Edificação 1
+            # Lógica para a Edificação 1
             st.markdown(f"**Fachada a usar na comparação (Edificação 1 - {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
             largura1 = st.number_input(f"Largura da fachada (Edificação 1)", min_value=0.0, key=f"largura_{edf1_data['nome']}", value=0.0)
             altura1 = st.number_input(f"Altura da fachada (Edificação 1)", min_value=0.0, key=f"altura_{edf1_data['nome']}", value=0.0)
@@ -400,9 +400,12 @@ if mostrar_campos:
                     dist_a = (valor_a * menor_dim_a) + acrescimo
                     dist_b = (valor_b * menor_dim_b) + acrescimo
             
+                    # CORREÇÃO DE SINTAXE APLICADA AQUI (edf_a_data)
                     if "uso" in edf_a_data or (edf_a_data.get('terrea') == "Sim" and edf_a_data.get('area') <= 750) or (edf_a_data.get('terrea') == "Não" and edf_a_data.get('area') <= 750 and edf_a_data.get('altura') < 12):
                         dist_a = min(dist_a, buscar_valor_tabela_simplificada(porcentagem_a, edf_a_data.get('num_pavimentos', 1)))
-                    if "uso" in edf_b_data or (edf_b_data.get('terrea') == "Sim" and edf_b_data.get('area') <= 750) or (edf_b_data.get('terrea') == "Não" and edf_b_data.get('area'] <= 750 and edf_b_data.get('altura') < 12):
+                    
+                    # CORREÇÃO DE SINTAXE APLICADA AQUI (edf_b_data)
+                    if "uso" in edf_b_data or (edf_b_data.get('terrea') == "Sim" and edf_b_data.get('area') <= 750) or (edf_b_data.get('terrea') == "Não" and edf_b_data.get('area') <= 750 and edf_b_data.get('altura') < 12):
                         dist_b = min(dist_b, buscar_valor_tabela_simplificada(porcentagem_b, edf_b_data.get('num_pavimentos', 1)))
             
                     st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
