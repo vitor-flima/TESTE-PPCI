@@ -221,8 +221,8 @@ if mostrar_campos:
     anexos = []
     st.markdown("### 📎 Anexos do Projeto")
     if num_anexos > 0:
-        opcoes_uso_anexo = ["C-1; Comércio com baixa carga de incêndio", "F-6; Clube social e Salão de Festa", "F-8; Local para refeição", "G-1; Garagem sem acesso de público e sem abastecimento", "G-2; Garagem com acesso de público e sem abastecimento", "J-2; Depósito de lixo"]
-        opcoes_carga_incendio = ["300 MJ/m²", "600 MJ/m²"]
+        opcoes_uso_anexo = ["C-1; Comércio com baixa carga de incêndio; Artigos de metal, louças, artigos hospitalares e outros", "F-6; Clube social e Salão de Festa; Buffets, clubes sociais, bingo, bilhares, tiro ao alvo, boliche", "F-8; Local para refeição; Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas", "G-1; Garagem sem acesso de público e sem abastecimento; Garagens automáticas, com manobristas", "G-2; Garagem com acesso de público e sem abastecimento; Garagens coletivas sem automação", "J-2; Depósito de lixo; Carga geral do decreto de 300 MJ/m²"]
+        opcoes_carga_incendio = ["C-1; Comércio varejista de alimentos; Minimercados, mercearias, armazéns — 300 MJ/m²", "F-8; Cantinas privativas; Serviços de alimentação — 300 MJ/m²", "F-6; Recreação e lazer não especificados; Atividades diversas — 600 MJ/m²", "G-1/G-2; Estacionamento de veículos; Garagens automáticas ou coletivas — 300 MJ/m²", "J-2; Depósito de lixo; Carga geral do decreto — 300 MJ/m²"]
         for i in range(int(num_anexos)):
             st.markdown(f"**Anexo {i+1}**")
             col_anexo_1, col_anexo_2 = st.columns(2)
@@ -230,11 +230,14 @@ if mostrar_campos:
                 nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
             with col_anexo_2:
                 area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}", value=0.0)
-            uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
-            carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
+            col_anexo_3, col_anexo_4 = st.columns(2)
+            with col_anexo_3:
+                uso = st.selectbox(f"Uso/Ocupação do anexo {i+1}", options=opcoes_uso_anexo, key=f"uso_anexo_{i}")
+            with col_anexo_4:
+                carga = st.selectbox(f"Carga de incêndio do anexo {i+1}", options=opcoes_carga_incendio, key=f"carga_anexo_{i}")
             anexos.append({
                 "nome": nome, "area": area, "uso": uso, "carga_incendio": carga,
-                "terrea": "Sim", "num_pavimentos": 1, "altura": 0.0,
+                "terrea": "Sim", "num_pavimentos": 1, "um_ap_por_pav": None, "altura": 0.0
             })
     
     # Juntar todas as edificações
@@ -275,7 +278,7 @@ if mostrar_campos:
                 distancia1 = min(distancia1, distancia_tabela_simplificada1)
             st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"{distancia1:.2f} m")
             
-            # Cálculo para Edificação 2
+            # Lógica para a Edificação 2
             st.markdown(f"**Fachada a usar na comparação (Edificação 2 - {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
             largura2 = st.number_input(f"Largura da fachada (Edificação 2)", min_value=0.0, key=f"largura_{edf2_data['nome']}", value=0.0)
             altura2 = st.number_input(f"Altura da fachada (Edificação 2)", min_value=0.0, key=f"altura_{edf2_data['nome']}", value=0.0)
@@ -286,15 +289,20 @@ if mostrar_campos:
             valor_tabela2 = buscar_valor_tabela(porcentagem2, fator_x2)
             menor_dim2 = min(largura2, altura2)
             distancia2 = (valor_tabela2 * menor_dim2) + acrescimo
+
+            # Aplica a regra para anexos e edificações residenciais que se enquadram na tabela simplificada
             if "uso" in edf2_data or (edf2_data['terrea'] == "Sim" and edf2_data['area'] <= 750) or (edf2_data['terrea'] == "Não" and edf2_data['area'] <= 750 and edf2_data['altura'] < 12):
                 distancia_tabela_simplificada2 = buscar_valor_tabela_simplificada(porcentagem2, edf2_data.get('num_pavimentos', 1))
                 distancia2 = min(distancia2, distancia_tabela_simplificada2)
             st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"{distancia2:.2f} m")
 
+        # Comparações adicionais
         if st.button("➕ Adicionar nova comparação"):
+            if "comparacoes_extra" not in st.session_state:
+                st.session_state.comparacoes_extra = []
             novo_id = len(st.session_state.comparacoes_extra)
             st.session_state.comparacoes_extra.append(novo_id)
-    
+        
         if "comparacoes_extra" in st.session_state:
             novas_comparacoes = []
             for idx in st.session_state.comparacoes_extra:
@@ -304,19 +312,20 @@ if mostrar_campos:
                     edf_a = st.selectbox("Edificação A", nomes_edificacoes, key=f"extra_edf_a_{idx}")
                 with col_edf[1]:
                     edf_b = st.selectbox("Edificação B", [n for n in nomes_edificacoes if n != edf_a], key=f"extra_edf_b_{idx}")
-    
+        
                 edf_a_data = next((e for e in todas_edificacoes if e["nome"] == edf_a), None)
                 edf_b_data = next((e for e in todas_edificacoes if e["nome"] == edf_b), None)
-    
+        
                 if edf_a_data and edf_b_data:
                     fachada_a = fachada_edificacao(edf_a_data)
                     fachada_b = fachada_edificacao(edf_b_data)
+            
                     if fachada_a == fachada_b:
                         st.markdown(f"✅ A fachada a analisar de **{edf_a}** e **{edf_b}** é: **{fachada_a}**.")
                     else:
                         st.markdown(f"✅ A fachada a analisar de **{edf_a}** é: **{fachada_a}**.")
                         st.markdown(f"✅ A fachada a analisar de **{edf_b}** é: **{fachada_b}**.")
-    
+            
                     col_dim = st.columns(2)
                     with col_dim[0]:
                         largura_a = st.number_input("Largura fachada A (m)", min_value=0.0, key=f"largura_a_{idx}")
@@ -324,40 +333,40 @@ if mostrar_campos:
                         area_a = largura_a * altura_a
                         abertura_a = st.number_input("Área de abertura A (m²)", min_value=0.0, key=f"abertura_a_{idx}")
                         porcentagem_a = (abertura_a / area_a) * 100 if area_a > 0 else 0
-    
+            
                     with col_dim[1]:
                         largura_b = st.number_input("Largura fachada B (m)", min_value=0.0, key=f"largura_b_{idx}")
                         altura_b = st.number_input("Altura fachada B (m)", min_value=0.0, key=f"altura_b_{idx}")
                         area_b = largura_b * altura_b
                         abertura_b = st.number_input("Área de abertura B (m²)", min_value=0.0, key=f"abertura_b_{idx}")
                         porcentagem_b = (abertura_b / area_b) * 100 if area_b > 0 else 0
-    
+            
                     fator_x_a = max(largura_a, altura_a) / max(1.0, min(largura_a, altura_a))
                     fator_x_b = max(largura_b, altura_b) / max(1.0, min(largura_b, altura_b))
                     valor_a = buscar_valor_tabela(porcentagem_a, fator_x_a)
                     valor_b = buscar_valor_tabela(porcentagem_b, fator_x_b)
                     menor_dim_a = min(largura_a, altura_a)
                     menor_dim_b = min(largura_b, altura_b)
+                    acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
                     dist_a = (valor_a * menor_dim_a) + acrescimo
                     dist_b = (valor_b * menor_dim_b) + acrescimo
-    
+            
                     if "uso" in edf_a_data or (edf_a_data.get('terrea') == "Sim" and edf_a_data.get('area') <= 750) or (edf_a_data.get('terrea') == "Não" and edf_a_data.get('area') <= 750 and edf_a_data.get('altura') < 12):
                         dist_a = min(dist_a, buscar_valor_tabela_simplificada(porcentagem_a, edf_a_data.get('num_pavimentos', 1)))
                     if "uso" in edf_b_data or (edf_b_data.get('terrea') == "Sim" and edf_b_data.get('area') <= 750) or (edf_b_data.get('terrea') == "Não" and edf_b_data.get('area') <= 750 and edf_b_data.get('altura') < 12):
                         dist_b = min(dist_b, buscar_valor_tabela_simplificada(porcentagem_b, edf_b_data.get('num_pavimentos', 1)))
-    
+            
                     st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
                     st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
-                    
+            
                     if st.button("❌ Remover comparação", key=f"remover_comparacao_{idx}"):
                         st.session_state.comparacoes_extra.remove(idx)
                         st.experimental_rerun()
-                        
+                
                     novas_comparacoes.append(idx)
             st.session_state.comparacoes_extra = novas_comparacoes
 
-    # --- NOVO BLOCO ---
-    # Definição de Tratamento (Independente/Conjunto) - MOVIDO PARA DEPOIS DA ANÁLISE DE ISOLAMENTO
+    # --- INÍCIO: NOVO BLOCO DE LÓGICA DE ISOLAMENTO ---
     if len(todas_edificacoes) > 1:
         st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 🔀 Definição de Tratamento por Edificação")
@@ -394,7 +403,7 @@ if mostrar_campos:
         st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
         st.markdown("### 📝 Comentários sobre Isolamento de Risco")
         st.text_area("Insira aqui suas observações sobre a análise de isolamento de risco.", key="comentario_isolamento_geral")
-    # --- FIM NOVO BLOCO ---
+    # --- FIM: NOVO BLOCO DE LÓGICA DE ISOLAMENTO ---
 
     # 🧯 Tabela resumo de medidas de segurança e Detalhamento por medida de segurança
     st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
@@ -422,8 +431,8 @@ if mostrar_campos:
                     
                     for outra_edificacao in todas_edificacoes:
                         if outra_edificacao.get("edificacao_conjunta") == nome_principal:
-                             edificacao_combinada['area'] += outra_edificacao['area']
-                             edificacao_combinada['areas_combinadas_com'].append(outra_edificacao['nome'])
+                            edificacao_combinada['area'] += outra_edificacao['area']
+                            edificacao_combinada['areas_combinadas_com'].append(outra_edificacao['nome'])
                     
                     edificacoes_consolidadas.append(edificacao_combinada)
                     nomes_ja_consolidados.add(nome_principal)
