@@ -155,6 +155,7 @@ if mostrar_campos:
             terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
             
             if terrea == "Não":
+                num_pavimentos = st.number_input(f"Número de pavimentos da edificação {i+1}", min_value=2, step=1, key=f"num_pavimentos_torre_{i}", value=2)
                 um_ap_por_pav = st.radio(f"A edificação {i+1} é de um apartamento por pavimento?", ["Sim", "Não"], key=f"ap_por_pav_{i}")
                 
                 subsolo_tecnico = st.radio(
@@ -225,6 +226,7 @@ if mostrar_campos:
                 altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}", value=0.0)
             
             else:
+                num_pavimentos = 1
                 um_ap_por_pav = None
                 subsolo_tecnico = "Não"
                 numero_subsolos = "0"
@@ -240,6 +242,7 @@ if mostrar_campos:
                 "area": area,
                 "altura": altura,
                 "terrea": terrea,
+                "num_pavimentos": num_pavimentos,
                 "um_ap_por_pav": um_ap_por_pav,
                 "subsolo_tecnico": subsolo_tecnico,
                 "numero_subsolos": numero_subsolos,
@@ -299,6 +302,7 @@ if mostrar_campos:
                 "uso": uso,
                 "carga_incendio": carga,
                 "terrea": "Sim",
+                "num_pavimentos": 1,
                 "um_ap_por_pav": None,
                 "altura": 0.0
             })
@@ -329,21 +333,21 @@ if mostrar_campos:
             else:
                 return "toda a fachada do edifício"
     
-        def buscar_valor_tabela_anexo(porcentagem):
-            if porcentagem <= 10:
-                return 4
-            elif 10 < porcentagem <= 20:
-                return 5
-            elif 20 < porcentagem <= 30:
-                return 6
-            elif 30 < porcentagem <= 40:
-                return 7
-            elif 40 < porcentagem <= 50:
-                return 8
-            elif 50 < porcentagem <= 70:
-                return 9
+        def buscar_valor_tabela_simplificada(porcentagem, num_pavimentos):
+            tabela = {
+                1: {10: 4, 20: 5, 30: 6, 40: 7, 50: 8, 70: 9, 100: 10},
+                2: {10: 6, 20: 7, 30: 8, 40: 9, 50: 10, 70: 11, 100: 12},
+                3: {10: 8, 20: 9, 30: 10, 40: 11, 50: 12, 70: 13, 100: 14}
+            }
+            if num_pavimentos >= 3:
+                num_pavimentos_lookup = 3
             else:
-                return 10
+                num_pavimentos_lookup = num_pavimentos
+
+            porcentagens_lookup = sorted(tabela[num_pavimentos_lookup].keys())
+            porcentagem_mais_proxima = next((p for p in porcentagens_lookup if porcentagem <= p), porcentagens_lookup[-1])
+            return tabela[num_pavimentos_lookup][porcentagem_mais_proxima]
+
     
         def buscar_valor_tabela(porcentagem, fator_x):
             tabela = {
@@ -386,10 +390,10 @@ if mostrar_campos:
             acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
             distancia1 = (valor_tabela1 * menor_dim1) + acrescimo
             
-            # Aplica a regra para anexos
-            if "uso" in edf1_data:
-                distancia_tabela_anexo1 = buscar_valor_tabela_anexo(porcentagem1)
-                distancia1 = min(distancia1, distancia_tabela_anexo1)
+            # Aplica a regra para anexos e edificações residenciais que se enquadram na tabela simplificada
+            if "uso" in edf1_data or (edf1_data['terrea'] == "Sim" and edf1_data['area'] <= 750) or (edf1_data['terrea'] == "Não" and edf1_data['area'] <= 750 and edf1_data['altura'] < 12):
+                distancia_tabela_simplificada1 = buscar_valor_tabela_simplificada(porcentagem1, edf1_data.get('num_pavimentos', 1))
+                distancia1 = min(distancia1, distancia_tabela_simplificada1)
             st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"{distancia1:.2f} m")
     
             # Lógica para a Edificação 2
@@ -404,10 +408,10 @@ if mostrar_campos:
             menor_dim2 = min(largura2, altura2)
             distancia2 = (valor_tabela2 * menor_dim2) + acrescimo
 
-            # Aplica a regra para anexos
-            if "uso" in edf2_data:
-                distancia_tabela_anexo2 = buscar_valor_tabela_anexo(porcentagem2)
-                distancia2 = min(distancia2, distancia_tabela_anexo2)
+            # Aplica a regra para anexos e edificações residenciais que se enquadram na tabela simplificada
+            if "uso" in edf2_data or (edf2_data['terrea'] == "Sim" and edf2_data['area'] <= 750) or (edf2_data['terrea'] == "Não" and edf2_data['area'] <= 750 and edf2_data['altura'] < 12):
+                distancia_tabela_simplificada2 = buscar_valor_tabela_simplificada(porcentagem2, edf2_data.get('num_pavimentos', 1))
+                distancia2 = min(distancia2, distancia_tabela_simplificada2)
             st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"{distancia2:.2f} m")
 
         # Comparações adicionais
@@ -464,12 +468,11 @@ if mostrar_campos:
                     acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
                     dist_a = (valor_a * menor_dim_a) + acrescimo
                     dist_b = (valor_b * menor_dim_b) + acrescimo
-
-                    # Aplica a regra para anexos
-                    if "uso" in edf_a_data:
-                        dist_a = min(dist_a, buscar_valor_tabela_anexo(porcentagem_a))
-                    if "uso" in edf_b_data:
-                        dist_b = min(dist_b, buscar_valor_tabela_anexo(porcentagem_b))
+                    
+                    if "uso" in edf_a_data or (edf_a_data.get('terrea') == "Sim" and edf_a_data.get('area') <= 750) or (edf_a_data.get('terrea') == "Não" and edf_a_data.get('area') <= 750 and edf_a_data.get('altura') < 12):
+                        dist_a = min(dist_a, buscar_valor_tabela_simplificada(porcentagem_a, edf_a_data.get('num_pavimentos', 1)))
+                    if "uso" in edf_b_data or (edf_b_data.get('terrea') == "Sim" and edf_b_data.get('area') <= 750) or (edf_b_data.get('terrea') == "Não" and edf_b_data.get('area') <= 750 and edf_b_data.get('altura') < 12):
+                        dist_b = min(dist_b, buscar_valor_tabela_simplificada(porcentagem_b, edf_b_data.get('num_pavimentos', 1)))
         
                     st.metric("Distância de isolamento A", f"{dist_a:.2f} m")
                     st.metric("Distância de isolamento B", f"{dist_b:.2f} m")
