@@ -170,7 +170,10 @@ def consolidar_edificacoes(edificacoes_atuais):
         if edificacao["nome"] in nomes_ja_consolidados:
             continue
         
-        is_principal_ou_independente = edificacao.get("tratamento") != "Conjunta" or \
+        # 'tratamento' é definido no loop de exibição, mas precisamos de um valor default para edificações não mostradas (se houver 1 torre)
+        tratamento_default = "Independente" if len(edificacoes_atuais) == 1 else edificacao.get("tratamento")
+        
+        is_principal_ou_independente = tratamento_default != "Conjunta" or \
                                       edificacao.get("nome") == edificacao.get("edificacao_conjunta")
         
         if is_principal_ou_independente:
@@ -238,7 +241,7 @@ if mostrar_campos:
     with col_qtd_edificacoes:
         num_torres = st.number_input("Quantidade de torres/edificações residenciais", min_value=0, step=1, value=1, key='num_torres')
     with col_qtd_anexos:
-        num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1, value=0, key='num_anexos', help="Edificações térreas com permanência de pessoas e de uso não residencial.")
+        num_anexos = st.number_input("Quantidade de anexos", min_value=0, step=1, value=1, key='num_anexos', help="Edificações térreas com permanência de pessoas e de uso não residencial.")
 
     torres = []
     st.markdown("### 🏢 Edificações Residenciais")
@@ -247,7 +250,7 @@ if mostrar_campos:
             st.markdown(f"**Edificação Residencial {i+1}**")
             col1, col2 = st.columns(2)
             with col1:
-                nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}")
+                nome = st.text_input(f"Nome da edificação {i+1}", key=f"nome_torre_{i}", value=f"Edificação {chr(97+i)}")
             with col2:
                 area = st.number_input(f"Área da edificação {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_torre_{i}", value=750.0)
             terrea = st.radio(f"A edificação {i+1} é térrea?", ["Sim", "Não"], key=f"terrea_torre_{i}")
@@ -298,7 +301,7 @@ if mostrar_campos:
             st.markdown(f"**Anexo {i+1}**")
             col_anexo_1, col_anexo_2 = st.columns(2)
             with col_anexo_1:
-                nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}")
+                nome = st.text_input(f"Nome do anexo {i+1}", key=f"nome_anexo_{i}", value=f"Anexo {chr(97+i)}")
             with col_anexo_2:
                 area = st.number_input(f"Área do anexo {i+1} (m²)", min_value=0.0, step=1.0, key=f"area_anexo_{i}", value=50.0)
             col_anexo_3, col_anexo_4 = st.columns(2)
@@ -317,13 +320,10 @@ if mostrar_campos:
     # --- INÍCIO NOVO BLOCO: LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
     if len(todas_edificacoes) >= 1:
         
-        # Se houver apenas 1 edificação, pula a definição de tratamento e consolida a área original.
-        if len(todas_edificacoes) == 1:
-            st.session_state.edificacoes_finais = todas_edificacoes
-            st.session_state.processamento_concluido = True
+        # O processamento só precisa acontecer se houver algo para processar (1 edificação é o mínimo)
         
-        # Se houver mais de 1 edificação, exibe a seção de tratamento e consolida as áreas.
-        else:
+        # 1. Definição de Tratamento: Só aparece se houver ANEXOS OU MAIS DE UMA TORRE
+        if len(torres) > 1 or len(anexos) > 0:
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
             st.markdown("### 🔀 Definição de Tratamento por Edificação")
             
@@ -334,9 +334,22 @@ if mostrar_campos:
                     tratamento_key = f"tratamento_{edificacao['nome']}_{i}"
                     conjunta_key = f"conjunta_com_{edificacao['nome']}_{i}"
                     
-                    # Permite a decisão para TODAS as edificações (Torres e Anexos)
+                    is_torre = edificacao in torres
+                    
+                    # Regra: Se é a ÚNICA torre, não precisa perguntar, é sempre Independente.
+                    if is_torre and len(torres) == 1:
+                        edificacao['tratamento'] = "Independente"
+                        edificacao['edificacao_conjunta'] = None
+                        st.markdown(f"✅ Edificação **{edificacao['nome']}** (Torre Única) será tratada como **Independente**.")
+                        continue
+                    
+                    # Título da pergunta: Adapta a linguagem
+                    pergunta = "A edificação será tratada independente ou conjunta com outra?"
+                    if not is_torre:
+                        pergunta = f"O anexo **{edificacao['nome']}** será tratado independente ou será anexado como área de outra?"
+                        
                     tratamento = st.radio(
-                        f"A edificação **{edificacao['nome']}** será tratada independente ou conjunta com outra?",
+                        pergunta,
                         ["Independente", "Conjunta"],
                         key=tratamento_key
                     )
@@ -353,18 +366,19 @@ if mostrar_campos:
                             )
                     else:
                         edificacao['edificacao_conjunta'] = None
-            
-            # Consolidação após todas as decisões de agrupamento
-            edificacoes_consolidadas = consolidar_edificacoes(todas_edificacoes)
-            st.session_state.edificacoes_finais = edificacoes_consolidadas
-            st.session_state.processamento_concluido = True 
+        
+        # 2. Consolidação da Área (Executada após o loop de tratamento)
+        edificacoes_consolidadas = consolidar_edificacoes(todas_edificacoes)
+        
+        st.session_state.edificacoes_finais = edificacoes_consolidadas
+        st.session_state.processamento_concluido = True 
+        
     # --- FIM NOVO BLOCO: LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
     # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL, só aparece se houver mais de 1 edificação)
     if len(todas_edificacoes) > 1:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
-            # ... (Restante da lógica de Isolamento de Risco (Fachada) )
             nomes_edificacoes_finais = [e["nome"] for e in st.session_state.edificacoes_finais if e["nome"]]
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
             st.markdown("### 🔀 Isolamento entre Edificações (Análise de Fachada)")
@@ -399,6 +413,7 @@ if mostrar_campos:
                 st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
                 st.markdown("### 📝 Comentários sobre Isolamento de Risco")
                 st.text_area("Observações sobre distanciamento e isolamento de risco.", key="comentario_isolamento_geral")
+
     
     # 🧯 Tabela resumo de medidas de segurança e Detalhamento por medida de segurança
     if st.session_state.processamento_concluido:
@@ -530,7 +545,6 @@ if mostrar_campos:
             key="download_button_planilha_final"
         )
     else:
-        # Se houver dados, mas o processamento ainda não foi concluído (i.e., não foi definido o agrupamento)
         if len(todas_edificacoes) > 0 and not st.session_state.processamento_concluido:
             st.warning("Defina o agrupamento das edificações para liberar a exportação.")
         elif not todas_edificacoes:
