@@ -22,9 +22,7 @@ if 'processamento_concluido' not in st.session_state:
     st.session_state.processamento_concluido = False
 
 
-# 🧠 Funções auxiliares (Omitting for brevity, no changes here)
-
-# ... [ Funções auxiliares (gerar_nome_arquivo, faixa_altura, medidas_tabela_completa, etc.) ] ...
+# 🧠 Funções auxiliares
 
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
@@ -215,10 +213,12 @@ def add_comparison():
     pass 
 
 def remove_comparison(index):
-    """Remove a comparação pelo índice."""
+    """Remove a comparação pelo índice e força o rerun."""
     if index < len(st.session_state.comparacoes_extra):
         st.session_state.comparacoes_extra.pop(index)
-        st.experimental_rerun() 
+        # CORREÇÃO APLICADA AQUI: Removemos o st.experimental_rerun() para evitar o erro.
+        # A simples modificação de st.session_state dentro de um on_click já força o rerun.
+    pass
 # --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
 
@@ -403,9 +403,9 @@ if mostrar_campos:
         
     # --- FIM LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
-    # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL, só aparece se houver mais de 1 edificação)
-    # A exibição agora é baseada no número de edificações CONSOLIDADAS
-    if len(st.session_state.edificacoes_finais) > 1:
+    # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL)
+    # A exibição é baseada no número de edificações iniciais, não no resultado da consolidação
+    if len(todas_edificacoes) > 1:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
             nomes_edificacoes_finais = [e["nome"] for e in st.session_state.edificacoes_finais if e["nome"]]
@@ -414,8 +414,7 @@ if mostrar_campos:
             
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
-            # --- GESTÃO DINÂMICA DE COMPARAÇÕES RESTAURADA ---
-            # O botão chama a função on_click que modifica o estado
+            # --- GESTÃO DINÂMICA DE COMPARAÇÕES ---
             if st.button("➕ Adicionar Comparação de Isolamento de Risco", on_click=add_comparison):
                 pass 
             
@@ -425,22 +424,15 @@ if mostrar_campos:
                 # Garante que as opções de seleção tenham as edificações consolidadas
                 opcoes_edf = nomes_edificacoes_finais
                 
-                # Tratamento de índices para evitar erros de seleção inicial
                 if not opcoes_edf:
                     st.warning("Cadastre edificações com tratamento independente para compará-las.")
                     break
                     
-                # Definir um valor inicial seguro para edf1_nome e edf2_nome
+                # Prepara o nome das edificações, garantindo que não quebre se houver apenas um item
                 if comp['edf1_nome'] is None or comp['edf1_nome'] not in opcoes_edf:
-                    comp['edf1_nome'] = opcoes_edf[0]
+                    comp['edf1_nome'] = opcoes_edf[0] if opcoes_edf else None
                     
-                # Se houver mais de uma opção, define o índice de edf2
-                if len(opcoes_edf) > 1:
-                    opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
-                    if comp['edf2_nome'] not in opcoes_edf2:
-                        comp['edf2_nome'] = opcoes_edf2[0] if opcoes_edf2 else None
-                    
-                    
+                
                 st.markdown(f"#### Comparação {i+1}: Risco entre {comp.get('edf1_nome', '...')} e {comp.get('edf2_nome', '...')}")
                 
                 col_init = st.columns(3)
@@ -471,14 +463,16 @@ if mostrar_campos:
                 # Botão de Remover
                 with col_init[2]:
                     st.write("") 
-                    # Chama remove_comparison para modificar o estado
                     if st.button(f"➖ Remover", key=f"remove_comp_{i}", on_click=remove_comparison, args=(i,)):
                         pass 
 
+                # Os dados para cálculo devem vir da lista CONSOLIDADA, pois a distância de isolamento 
+                # depende do tamanho da edificação (área/altura), que está na lista consolidada.
                 edf1_data = next((e for e in st.session_state.edificacoes_finais if e["nome"] == comp['edf1_nome']), None)
                 edf2_data = next((e for e in st.session_state.edificacoes_finais if e["nome"] == comp['edf2_nome']), None)
 
-                if edf1_data and edf2_data:
+
+                if edf1_data and edf2_data and edf1_data != edf2_data: # Adiciona verificação para garantir que são diferentes
                     acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
                     
                     st.markdown(f"**Fachada a usar na comparação (Edificação 1 - {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
