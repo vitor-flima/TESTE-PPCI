@@ -131,21 +131,26 @@ def fachada_edificacao(edf):
         return "toda a fachada do edifício"
 
 def buscar_valor_tabela_simplificada(porcentagem, num_pavimentos):
+    # Lógica da Tabela Simplificada para Distância (Tabela A.4 NT-07)
+    # Valores de referência para 1 a 3 pavimentos (3+):
     tabela = {
         1: {10: 4, 20: 5, 30: 6, 40: 7, 50: 8, 70: 9, 100: 10},
         2: {10: 6, 20: 7, 30: 8, 40: 9, 50: 10, 70: 11, 100: 12},
         3: {10: 8, 20: 9, 30: 10, 40: 11, 50: 12, 70: 13, 100: 14}
     }
-    if num_pavimentos >= 3:
-        num_pavimentos_lookup = 3
-    else:
-        num_pavimentos_lookup = num_pavimentos
+    # Garante que pavimentos >= 3 use a linha 3
+    num_pavimentos_lookup = min(num_pavimentos, 3) 
 
     porcentagens_lookup = sorted(tabela[num_pavimentos_lookup].keys())
-    porcentagem_mais_proxima = next((p for p in porcentagens_lookup if porcentagem <= p), porcentagens_lookup[-1])
+    
+    # Encontra a Porcentagem mais próxima (sem interpolação linear, apenas o ponto mais próximo)
+    porcentagem_clamped = max(min(porcentagem, 100), 10) # Limita entre 10% e 100%
+    porcentagem_mais_proxima = min(porcentagens_lookup, key=lambda p: abs(p - porcentagem_clamped))
+    
     return tabela[num_pavimentos_lookup][porcentagem_mais_proxima]
 
 def buscar_valor_tabela(porcentagem, fator_x):
+    # Tabela do Fator Alfa (Tabela A.3 NT-07)
     tabela = {
         20: [0.4, 0.4, 0.44, 0.46, 0.48, 0.49, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51],
         30: [0.6, 0.66, 0.73, 0.79, 0.84, 0.88, 0.9, 0.92, 0.93, 0.94, 0.94, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
@@ -156,8 +161,11 @@ def buscar_valor_tabela(porcentagem, fator_x):
         100: [1.4, 1.56, 1.74, 1.93, 2.13, 2.34, 2.55, 2.76, 2.95, 3.12, 3.26, 3.36, 3.43, 3.48, 3.51, 3.52, 3.53]
     }
     valores_x = [1.0, 1.3, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0, 32.0, 40.0]
+    
+    # Encontra a Porcentagem e o Fator X mais próximos (aproximação discreta)
     porcentagem_mais_proxima = min(tabela.keys(), key=lambda p: abs(p - porcentagem))
     indice_x = min(range(len(valores_x)), key=lambda i: abs(valores_x[i] - fator_x))
+    
     return tabela[porcentagem_mais_proxima][indice_x]
 
 def consolidar_edificacoes(edificacoes_atuais):
@@ -205,10 +213,9 @@ def add_comparison():
     st.session_state.comparacoes_extra.append({
         'edf1_nome': None, 
         'edf2_nome': None, 
-        'largura1': 5.0, 
-        'altura1': 10.0, 
-        'abertura1': 2.0,
-        # NOVOS CAMPOS PARA EDIFICAÇÃO 2
+        'largura1': 10.00, 
+        'altura1': 2.70, 
+        'abertura1': 3.36, # Valores default que replicam o cenário de teste
         'largura2': 5.0, 
         'altura2': 10.0, 
         'abertura2': 2.0
@@ -405,7 +412,6 @@ if mostrar_campos:
     # --- FIM LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
     # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL)
-    # A exibição é baseada no número de edificações iniciais
     if len(todas_edificacoes) > 1:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
@@ -495,35 +501,76 @@ if mostrar_campos:
                 if edf1_data and edf2_data and edf1_data['nome'] != edf2_data['nome']:
                     acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
                     
-                    # --- INPUTS PARA EDIFICAÇÃO 1 ---
+                    # --- CÁLCULOS PARA EDIFICAÇÃO 1 ---
+                    # Calcula o Fator X e Porcentagem de Abertura para Edificação 1
+                    largura1 = comp.get('largura1', 0.0)
+                    altura1 = comp.get('altura1', 0.0)
+                    area1 = largura1 * altura1
+                    abertura1 = comp.get('abertura1', 0.0)
+                    
+                    porcentagem1 = (abertura1 / area1) * 100 if area1 > 0 else 0
+                    fator_x1 = max(largura1, altura1) / max(1.0, min(largura1, altura1))
+                    valor_tabela1 = buscar_valor_tabela(porcentagem1, fator_x1)
+                    menor_dim1 = min(largura1, altura1)
+                    distancia_calculada_1 = (valor_tabela1 * menor_dim1) + acrescimo
+                    
+                    # Aplica regra de min(Distância Calculada, Distância Simplificada)
+                    if edf1_data.get('area', 0.0) <= 750 and edf1_data.get('altura', 0.0) <= 12:
+                        distancia_tabela_simplificada1 = buscar_valor_tabela_simplificada(porcentagem1, edf1_data.get('num_pavimentos', 1))
+                        distancia_final_1 = min(distancia_calculada_1, distancia_tabela_simplificada1)
+                    else:
+                        distancia_final_1 = distancia_calculada_1
+
+
+                    # --- INPUTS E RESULTADOS PARA EDIFICAÇÃO 1 ---
                     st.markdown(f"**Fachada a usar na comparação (Edificação 1 - {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
                     col_calc_1 = st.columns(4)
                     with col_calc_1[0]:
-                        comp['largura1'] = st.number_input(f"Largura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"largura1_{i}", value=comp.get('largura1', 5.0))
+                        comp['largura1'] = st.number_input(f"Largura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"largura1_{i}", value=largura1)
                     with col_calc_1[1]:
-                        comp['altura1'] = st.number_input(f"Altura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"altura1_{i}", value=comp.get('altura1', 10.0))
+                        comp['altura1'] = st.number_input(f"Altura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"altura1_{i}", value=altura1)
                     with col_calc_1[2]:
-                        area1 = comp['largura1'] * comp['altura1']
                         st.metric(label=f"Área Fachada {edf1_data['nome']} (m²)", value=f"{area1:.2f}")
                     with col_calc_1[3]:
-                        comp['abertura1'] = st.number_input(f"Área Abertura {edf1_data['nome']} (m²)", min_value=0.0, step=0.1, key=f"abertura1_{i}", value=comp.get('abertura1', 2.0))
+                        comp['abertura1'] = st.number_input(f"Área Abertura {edf1_data['nome']} (m²)", min_value=0.0, step=0.1, key=f"abertura1_{i}", value=abertura1)
                     
-                    st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"N/A m")
+                    st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"{distancia_final_1:.2f} m")
                     
-                    # --- INPUTS PARA EDIFICAÇÃO 2 ---
+                    
+                    # --- CÁLCULOS PARA EDIFICAÇÃO 2 ---
+                    # Calcula o Fator X e Porcentagem de Abertura para Edificação 2
+                    largura2 = comp.get('largura2', 0.0)
+                    altura2 = comp.get('altura2', 0.0)
+                    area2 = largura2 * altura2
+                    abertura2 = comp.get('abertura2', 0.0)
+                    
+                    porcentagem2 = (abertura2 / area2) * 100 if area2 > 0 else 0
+                    fator_x2 = max(largura2, altura2) / max(1.0, min(largura2, altura2))
+                    valor_tabela2 = buscar_valor_tabela(porcentagem2, fator_x2)
+                    menor_dim2 = min(largura2, altura2)
+                    distancia_calculada_2 = (valor_tabela2 * menor_dim2) + acrescimo
+                    
+                    # Aplica regra de min(Distância Calculada, Distância Simplificada)
+                    if edf2_data.get('area', 0.0) <= 750 and edf2_data.get('altura', 0.0) <= 12:
+                        distancia_tabela_simplificada2 = buscar_valor_tabela_simplificada(porcentagem2, edf2_data.get('num_pavimentos', 1))
+                        distancia_final_2 = min(distancia_calculada_2, distancia_tabela_simplificada2)
+                    else:
+                        distancia_final_2 = distancia_calculada_2
+
+
+                    # --- INPUTS E RESULTADOS PARA EDIFICAÇÃO 2 ---
                     st.markdown(f"**Fachada a usar na comparação (Edificação 2 - {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
                     col_calc_2 = st.columns(4)
                     with col_calc_2[0]:
-                        comp['largura2'] = st.number_input(f"Largura Fachada {edf2_data['nome']} (m)", min_value=0.0, step=0.1, key=f"largura2_{i}", value=comp.get('largura2', 5.0))
+                        comp['largura2'] = st.number_input(f"Largura Fachada {edf2_data['nome']} (m)", min_value=0.0, step=0.1, key=f"largura2_{i}", value=largura2)
                     with col_calc_2[1]:
-                        comp['altura2'] = st.number_input(f"Altura Fachada {edf2_data['nome']} (m)", min_value=0.0, step=0.1, key=f"altura2_{i}", value=comp.get('altura2', 10.0))
+                        comp['altura2'] = st.number_input(f"Altura Fachada {edf2_data['nome']} (m)", min_value=0.0, step=0.1, key=f"altura2_{i}", value=altura2)
                     with col_calc_2[2]:
-                        area2 = comp['largura2'] * comp['altura2']
                         st.metric(label=f"Área Fachada {edf2_data['nome']} (m²)", value=f"{area2:.2f}")
                     with col_calc_2[3]:
-                        comp['abertura2'] = st.number_input(f"Área Abertura {edf2_data['nome']} (m²)", min_value=0.0, step=0.1, key=f"abertura2_{i}", value=comp.get('abertura2', 2.0))
+                        comp['abertura2'] = st.number_input(f"Área Abertura {edf2_data['nome']} (m²)", min_value=0.0, step=0.1, key=f"abertura2_{i}", value=abertura2)
                         
-                    st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"N/A m")
+                    st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"{distancia_final_2:.2f} m")
                 
                 st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
                 
