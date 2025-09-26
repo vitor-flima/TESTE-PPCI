@@ -184,7 +184,6 @@ def buscar_valor_tabela(porcentagem, fator_x):
 
     # 3. INTERPOLAÇÃO
     if y1 == y2: 
-        # Interpolação 1D no eixo X
         v_y1 = tabela_data[y1][idx1_x]
         v_y2 = tabela_data[y1][idx2_x]
         final_alpha = linear_interpolate(fator_x, x1, x2, v_y1, v_y2)
@@ -201,7 +200,6 @@ def buscar_valor_tabela(porcentagem, fator_x):
         final_alpha = linear_interpolate(porcentagem, y1, y2, alpha_y1, alpha_y2)
     
     return final_alpha.item() if hasattr(final_alpha, 'item') else final_alpha 
-
 
 def consolidar_edificacoes(edificacoes_atuais):
     edificacoes_consolidadas = []
@@ -501,8 +499,10 @@ if mostrar_campos:
                 
                 # Edificação 2 (Input)
                 with col_init[1]:
+                    # Recalcula as opções após a seleção da Edificação 1
                     opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                     
+                    # Se não há mais opções, garante que a seleção seja None
                     if not opcoes_edf2:
                         comp['edf2_nome'] = None
                         index_edf2 = 0
@@ -545,6 +545,7 @@ if mostrar_campos:
                     menor_dim1 = min(largura1, altura1)
                     distancia_calculada_1 = (valor_tabela1 * menor_dim1) + acrescimo
                     
+                    # Aplica regra de min(Distância Calculada, Distância Simplificada)
                     if edf1_data.get('area', 0.0) <= 750 and edf1_data.get('altura', 0.0) <= 12:
                         distancia_tabela_simplificada1 = buscar_valor_tabela_simplificada(porcentagem1, edf1_data.get('num_pavimentos', 1))
                         distancia_final_1 = min(distancia_calculada_1, distancia_tabela_simplificada1)
