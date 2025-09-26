@@ -22,7 +22,9 @@ if 'processamento_concluido' not in st.session_state:
     st.session_state.processamento_concluido = False
 
 
-# 🧠 Funções auxiliares
+# 🧠 Funções auxiliares (Omitting for brevity, no changes here)
+
+# ... [ Funções auxiliares (gerar_nome_arquivo, faixa_altura, medidas_tabela_completa, etc.) ] ...
 
 def gerar_nome_arquivo(nome_projeto, nome_arquivo_entrada=None):
     if nome_arquivo_entrada:
@@ -216,9 +218,7 @@ def remove_comparison(index):
     """Remove a comparação pelo índice."""
     if index < len(st.session_state.comparacoes_extra):
         st.session_state.comparacoes_extra.pop(index)
-        # CORREÇÃO APLICADA AQUI: Removemos o st.experimental_rerun() para evitar o erro. 
-        # A remoção do elemento já força a mudança de estado e o Streamlit fará o rerun subsequente.
-    pass
+        st.experimental_rerun() 
 # --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
 
@@ -404,7 +404,8 @@ if mostrar_campos:
     # --- FIM LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
     # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL, só aparece se houver mais de 1 edificação)
-    if len(todas_edificacoes) > 1:
+    # A exibição agora é baseada no número de edificações CONSOLIDADAS
+    if len(st.session_state.edificacoes_finais) > 1:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
             nomes_edificacoes_finais = [e["nome"] for e in st.session_state.edificacoes_finais if e["nome"]]
@@ -420,24 +421,44 @@ if mostrar_campos:
             
             # Loop sobre as comparações dinâmicas
             for i, comp in enumerate(st.session_state.comparacoes_extra):
+                
+                # Garante que as opções de seleção tenham as edificações consolidadas
+                opcoes_edf = nomes_edificacoes_finais
+                
+                # Tratamento de índices para evitar erros de seleção inicial
+                if not opcoes_edf:
+                    st.warning("Cadastre edificações com tratamento independente para compará-las.")
+                    break
+                    
+                # Definir um valor inicial seguro para edf1_nome e edf2_nome
+                if comp['edf1_nome'] is None or comp['edf1_nome'] not in opcoes_edf:
+                    comp['edf1_nome'] = opcoes_edf[0]
+                    
+                # Se houver mais de uma opção, define o índice de edf2
+                if len(opcoes_edf) > 1:
+                    opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
+                    if comp['edf2_nome'] not in opcoes_edf2:
+                        comp['edf2_nome'] = opcoes_edf2[0] if opcoes_edf2 else None
+                    
+                    
                 st.markdown(f"#### Comparação {i+1}: Risco entre {comp.get('edf1_nome', '...')} e {comp.get('edf2_nome', '...')}")
                 
                 col_init = st.columns(3)
                 
                 # Edificação 1
                 with col_init[0]:
-                    index_edf1 = nomes_edificacoes_finais.index(comp['edf1_nome']) if comp['edf1_nome'] in nomes_edificacoes_finais else (0 if nomes_edificacoes_finais else 0)
+                    index_edf1 = opcoes_edf.index(comp['edf1_nome']) if comp['edf1_nome'] in opcoes_edf else 0
                     
                     comp['edf1_nome'] = st.selectbox(
                         "Edificação 1:", 
-                        nomes_edificacoes_finais, 
+                        opcoes_edf, 
                         key=f"comparacao_edf1_{i}",
                         index=index_edf1
                     )
                 
                 # Edificação 2
                 with col_init[1]:
-                    opcoes_edf2 = [n for n in nomes_edificacoes_finais if n != comp['edf1_nome']]
+                    opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                     index_edf2 = opcoes_edf2.index(comp['edf2_nome']) if comp['edf2_nome'] in opcoes_edf2 else (0 if opcoes_edf2 else 0)
                     
                     comp['edf2_nome'] = st.selectbox(
@@ -450,12 +471,12 @@ if mostrar_campos:
                 # Botão de Remover
                 with col_init[2]:
                     st.write("") 
-                    # Usa on_click para chamar a função de remoção que modifica o estado, resolvendo o erro.
+                    # Chama remove_comparison para modificar o estado
                     if st.button(f"➖ Remover", key=f"remove_comp_{i}", on_click=remove_comparison, args=(i,)):
                         pass 
 
-                edf1_data = next((e for e in todas_edificacoes if e["nome"] == comp['edf1_nome']), None)
-                edf2_data = next((e for e in todas_edificacoes if e["nome"] == comp['edf2_nome']), None)
+                edf1_data = next((e for e in st.session_state.edificacoes_finais if e["nome"] == comp['edf1_nome']), None)
+                edf2_data = next((e for e in st.session_state.edificacoes_finais if e["nome"] == comp['edf2_nome']), None)
 
                 if edf1_data and edf2_data:
                     acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
