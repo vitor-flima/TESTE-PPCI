@@ -210,13 +210,15 @@ def add_comparison():
         'altura1': 10.0, 
         'abertura1': 2.0
     })
-    st.experimental_rerun() # CORREÇÃO: Força o rerun imediatamente após a modificação do estado.
+    # CORREÇÃO APLICADA AQUI: Removemos o st.experimental_rerun() da função, 
+    # pois o clique no botão já força o rerun, e a chamada interna causava o erro de estado.
+    pass 
 
 def remove_comparison(index):
     """Remove a comparação pelo índice e força um rerun para atualizar a UI."""
     if index < len(st.session_state.comparacoes_extra):
         st.session_state.comparacoes_extra.pop(index)
-        st.experimental_rerun()
+        st.experimental_rerun() # Mantemos o rerun aqui para garantir que a UI se atualize após a remoção.
 # --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
 
@@ -407,23 +409,23 @@ if mostrar_campos:
             
             nomes_edificacoes_finais = [e["nome"] for e in st.session_state.edificacoes_finais if e["nome"]]
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
-            st.markdown("### cendo Isoloamento entre Edificações (Análise de Fachada)")
+            st.markdown("### Isolamento entre Edificações (Análise de Fachada)")
             
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
             # --- GESTÃO DINÂMICA DE COMPARAÇÕES RESTAURADA ---
-            if st.button("➕ Adicionar Comparação de Isolamento de Risco"):
-                add_comparison()
+            # O st.button sem on_click já causa o rerun necessário para o add_comparison funcionar
+            if st.button("➕ Adicionar Comparação de Isolamento de Risco", on_click=add_comparison):
+                pass 
             
             # Loop sobre as comparações dinâmicas
             for i, comp in enumerate(st.session_state.comparacoes_extra):
-                st.markdown(f"#### Comparação {i+1}: Risco entre {comp['edf1_nome'] or '...'} e {comp['edf2_nome'] or '...'}")
+                st.markdown(f"#### Comparação {i+1}: Risco entre {comp.get('edf1_nome', '...')} e {comp.get('edf2_nome', '...')}")
                 
                 col_init = st.columns(3)
                 
                 # Edificação 1
                 with col_init[0]:
-                    # Garante que o nome exista na lista para evitar erro de índice
                     index_edf1 = nomes_edificacoes_finais.index(comp['edf1_nome']) if comp['edf1_nome'] in nomes_edificacoes_finais else (0 if nomes_edificacoes_finais else 0)
                     
                     comp['edf1_nome'] = st.selectbox(
