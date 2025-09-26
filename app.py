@@ -209,15 +209,16 @@ def add_comparison():
         'altura1': 10.0, 
         'abertura1': 2.0
     })
-    # CORREÇÃO: Removido st.experimental_rerun() para evitar o AttributeError.
+    # O rerun é gerenciado pelo Streamlit ao clicar no botão
     pass 
 
 def remove_comparison(index):
     """Remove a comparação pelo índice."""
     if index < len(st.session_state.comparacoes_extra):
         st.session_state.comparacoes_extra.pop(index)
-        # CORREÇÃO: Chamada explícita ao rerun para forçar a atualização após remoção.
-        st.experimental_rerun() 
+        # CORREÇÃO APLICADA AQUI: Removemos o st.experimental_rerun() para evitar o erro. 
+        # A remoção do elemento já força a mudança de estado e o Streamlit fará o rerun subsequente.
+    pass
 # --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
 
@@ -413,8 +414,7 @@ if mostrar_campos:
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
             # --- GESTÃO DINÂMICA DE COMPARAÇÕES RESTAURADA ---
-            # CORREÇÃO: O botão chama a função on_click que modifica o estado,
-            # e o próprio Streamlit fará o rerun.
+            # O botão chama a função on_click que modifica o estado
             if st.button("➕ Adicionar Comparação de Isolamento de Risco", on_click=add_comparison):
                 pass 
             
@@ -450,7 +450,7 @@ if mostrar_campos:
                 # Botão de Remover
                 with col_init[2]:
                     st.write("") 
-                    # Chama remove_comparison para atualizar o estado
+                    # Usa on_click para chamar a função de remoção que modifica o estado, resolvendo o erro.
                     if st.button(f"➖ Remover", key=f"remove_comp_{i}", on_click=remove_comparison, args=(i,)):
                         pass 
 
