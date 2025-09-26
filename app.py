@@ -215,6 +215,7 @@ def remove_comparison(index):
     """Remove a comparação pelo índice."""
     if index < len(st.session_state.comparacoes_extra):
         st.session_state.comparacoes_extra.pop(index)
+        # CORREÇÃO FINAL: Retirado o st.experimental_rerun() daqui
     pass
 # --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
@@ -406,7 +407,6 @@ if mostrar_campos:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
             # --- PREPARAÇÃO DA LISTA DE OPÇÕES ---
-            # A lista de opções vem dos projetos CONSOLIDADOS que são INDEPENDENTES
             nomes_edificacoes_finais = [e["nome"] for e in st.session_state.edificacoes_finais if e["nome"]]
             
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
@@ -418,7 +418,6 @@ if mostrar_campos:
             if st.button("➕ Adicionar Comparação de Isolamento de Risco", on_click=add_comparison):
                 pass 
             
-            # Condição para só exibir o loop se houver pelo menos 2 projetos finais para comparar
             if len(nomes_edificacoes_finais) < 2:
                 st.warning("É necessário que hajam pelo menos duas edificações ou grupos consolidados (Independentes) para fazer uma comparação de isolamento de risco.")
             
@@ -431,10 +430,16 @@ if mostrar_campos:
                     break
                     
                 # 1. TRATAMENTO DE VALOR INICIAL PARA SELEÇÃO
-                # Garante que o valor inicial seja seguro
                 if comp['edf1_nome'] is None or comp['edf1_nome'] not in opcoes_edf:
                     comp['edf1_nome'] = opcoes_edf[0] if opcoes_edf else None
                     
+                # 2. TRATAMENTO DE VALOR INICIAL PARA EDIFICAÇÃO 2
+                opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
+                if not opcoes_edf2:
+                     comp['edf2_nome'] = None
+                elif comp['edf2_nome'] is None or comp['edf2_nome'] not in opcoes_edf2:
+                    comp['edf2_nome'] = opcoes_edf2[0]
+                
                 st.markdown(f"#### Comparação {i+1}: Risco entre {comp.get('edf1_nome', '...')} e {comp.get('edf2_nome', '...')}")
                 
                 col_init = st.columns(3)
@@ -452,20 +457,12 @@ if mostrar_campos:
                 
                 # Edificação 2
                 with col_init[1]:
+                    # Recalcula as opções após a seleção da Edificação 1
                     opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                     
-                    # 2. TRATAMENTO DE VALOR INICIAL PARA EDIFICAÇÃO 2
-                    # Se não houver opções (após a Edificação 1 ser selecionada), garante que o valor seja None
-                    if not opcoes_edf2:
-                         comp['edf2_nome'] = None
-                         index_edf2 = 0
-                    elif comp['edf2_nome'] not in opcoes_edf2:
-                         # Se o valor anterior sumiu, usa o primeiro disponível
-                         comp['edf2_nome'] = opcoes_edf2[0]
-                         index_edf2 = 0
-                    else:
-                         index_edf2 = opcoes_edf2.index(comp['edf2_nome'])
-
+                    # Garantir que o índice seja 0 se houver opções, ou 0 se estiver vazia (para evitar crash)
+                    index_edf2 = opcoes_edf2.index(comp['edf2_nome']) if comp['edf2_nome'] in opcoes_edf2 else (0 if opcoes_edf2 else 0)
+                    
                     comp['edf2_nome'] = st.selectbox(
                         "Edificação 2:", 
                         opcoes_edf2, 
@@ -505,6 +502,12 @@ if mostrar_campos:
                 
                 st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
                 
+            # --- COMENTÁRIO FIXO EM VERMELHO ADICIONADO AQUI ---
+            st.markdown(
+                "<span style='color:red'>⚠️ Ao terminar as análises, volte e revise as considerações de **independência** de cada edificação/anexo.</span>", 
+                unsafe_allow_html=True
+            )
+            
             st.markdown("### 📝 Comentários sobre Isolamento de Risco")
             st.text_area("Observações sobre distanciamento e isolamento de risco.", key="comentario_isolamento_geral")
     
