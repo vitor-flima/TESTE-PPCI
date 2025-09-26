@@ -198,8 +198,11 @@ def consolidar_edificacoes(edificacoes_atuais):
 
 # --- FUNÇÕES PARA GESTÃO DE COMPARAÇÕES DE ISOLAMENTO DE RISCO ---
 def add_comparison():
-    """Adiciona uma nova comparação à lista no session_state."""
-    # Valores iniciais razoáveis para os inputs
+    """Adiciona uma nova comparação à lista no session_state e força o rerun."""
+    # Garante que a lista exista antes de adicionar
+    if 'comparacoes_extra' not in st.session_state:
+        st.session_state.comparacoes_extra = []
+        
     st.session_state.comparacoes_extra.append({
         'edf1_nome': None, 
         'edf2_nome': None, 
@@ -207,6 +210,7 @@ def add_comparison():
         'altura1': 10.0, 
         'abertura1': 2.0
     })
+    st.experimental_rerun() # CORREÇÃO: Força o rerun imediatamente após a modificação do estado.
 
 def remove_comparison(index):
     """Remove a comparação pelo índice e força um rerun para atualizar a UI."""
@@ -334,7 +338,7 @@ if mostrar_campos:
     # Juntar todas as edificações
     todas_edificacoes = torres + anexos
 
-    # --- INÍCIO NOVO BLOCO: LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
+    # --- INÍCIO LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
     if len(todas_edificacoes) >= 1:
         
         # 1. Definição de Tratamento (Aparece se houver ANEXOS OU MAIS DE UMA TORRE)
@@ -351,8 +355,8 @@ if mostrar_campos:
                     
                     is_torre = edificacao in torres
                     
-                    # --- FLUXO CONDICIONAL ---
-                    # 1. Se é a ÚNICA torre, define como Independente e pula o radio button
+                    # --- FLUXO CONDICIONAL DE EXIBIÇÃO ---
+                    # 1. Se é a ÚNICA torre, define como Independente e informa
                     if is_torre and len(torres) == 1:
                         edificacao['tratamento'] = "Independente"
                         edificacao['edificacao_conjunta'] = None
@@ -376,7 +380,6 @@ if mostrar_campos:
                             st.warning("⚠️ Necessário cadastrar uma torre para anexar a área.")
                             edificacao['edificacao_conjunta'] = None
                         else:
-                            # Pergunta ajustada para 'absorver'
                             edificacao['edificacao_conjunta'] = st.selectbox(
                                 f"Qual edificação **irá absorver** a área de **{edificacao['nome']}**?",
                                 options=nomes_torres,
@@ -384,6 +387,11 @@ if mostrar_campos:
                             )
                     else:
                         edificacao['edificacao_conjunta'] = None
+        else:
+            # Caso haja apenas 1 edificação e 0 anexos, define como Independente
+            if todas_edificacoes:
+                todas_edificacoes[0]['tratamento'] = "Independente"
+                todas_edificacoes[0]['edificacao_conjunta'] = None
         
         # 2. Consolidação da Área (Executada após o loop de tratamento)
         edificacoes_consolidadas = consolidar_edificacoes(todas_edificacoes)
@@ -391,7 +399,7 @@ if mostrar_campos:
         st.session_state.edificacoes_finais = edificacoes_consolidadas
         st.session_state.processamento_concluido = True 
         
-    # --- FIM NOVO BLOCO: LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
+    # --- FIM LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
     # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL, só aparece se houver mais de 1 edificação)
     if len(todas_edificacoes) > 1:
@@ -399,17 +407,14 @@ if mostrar_campos:
             
             nomes_edificacoes_finais = [e["nome"] for e in st.session_state.edificacoes_finais if e["nome"]]
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
-            st.markdown("### 🔀 Isolamento entre Edificações (Análise de Fachada)")
+            st.markdown("### cendo Isoloamento entre Edificações (Análise de Fachada)")
             
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
             # --- GESTÃO DINÂMICA DE COMPARAÇÕES RESTAURADA ---
             if st.button("➕ Adicionar Comparação de Isolamento de Risco"):
                 add_comparison()
-                # O rerun é necessário se a lista for vazia e for a primeira adição
-                if len(st.session_state.comparacoes_extra) == 1:
-                    st.experimental_rerun() 
-
+            
             # Loop sobre as comparações dinâmicas
             for i, comp in enumerate(st.session_state.comparacoes_extra):
                 st.markdown(f"#### Comparação {i+1}: Risco entre {comp['edf1_nome'] or '...'} e {comp['edf2_nome'] or '...'}")
@@ -418,7 +423,7 @@ if mostrar_campos:
                 
                 # Edificação 1
                 with col_init[0]:
-                    # Tenta pré-selecionar o valor salvo ou usa o primeiro da lista
+                    # Garante que o nome exista na lista para evitar erro de índice
                     index_edf1 = nomes_edificacoes_finais.index(comp['edf1_nome']) if comp['edf1_nome'] in nomes_edificacoes_finais else (0 if nomes_edificacoes_finais else 0)
                     
                     comp['edf1_nome'] = st.selectbox(
@@ -442,10 +447,10 @@ if mostrar_campos:
 
                 # Botão de Remover
                 with col_init[2]:
-                    # Adiciona um espaço para alinhar o botão de remover
                     st.write("") 
+                    # Usa on_click para chamar a função de remoção que força o rerun
                     if st.button(f"➖ Remover", key=f"remove_comp_{i}", on_click=remove_comparison, args=(i,)):
-                        pass # A remoção é tratada pelo on_click e o rerun
+                        pass 
 
                 edf1_data = next((e for e in todas_edificacoes if e["nome"] == comp['edf1_nome']), None)
                 edf2_data = next((e for e in todas_edificacoes if e["nome"] == comp['edf2_nome']), None)
@@ -473,7 +478,6 @@ if mostrar_campos:
                 
             st.markdown("### 📝 Comentários sobre Isolamento de Risco")
             st.text_area("Observações sobre distanciamento e isolamento de risco.", key="comentario_isolamento_geral")
-            # --- FIM GESTÃO DINÂMICA DE COMPARAÇÕES ---
     
     # 🧯 Tabela resumo de medidas de segurança e Detalhamento por medida de segurança
     if st.session_state.processamento_concluido:
