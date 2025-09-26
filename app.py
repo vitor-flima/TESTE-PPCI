@@ -118,7 +118,7 @@ def fachada_edificacao(edf):
         return "toda a fachada do pavimento"
     elif "terrea" in edf and edf["terrea"] == "Sim":
         return "toda a fachada do edifício"
-    elif "altura" in edf and "area" in edf:
+    elif "altura" in edf and edf["area"] in edf:
         if edf["area"] <= 750 and edf["altura"] < 12:
             return "toda a área da fachada"
         elif edf["area"] > 750 and edf["altura"] < 12:
@@ -170,10 +170,7 @@ def consolidar_edificacoes(edificacoes_atuais):
         if edificacao["nome"] in nomes_ja_consolidados:
             continue
         
-        # 'tratamento' é definido no loop de exibição, mas precisamos de um valor default para edificações não mostradas (se houver 1 torre)
-        tratamento_default = "Independente" if len(edificacoes_atuais) == 1 else edificacao.get("tratamento")
-        
-        is_principal_ou_independente = tratamento_default != "Conjunta" or \
+        is_principal_ou_independente = edificacao.get("tratamento") != "Conjunta" or \
                                       edificacao.get("nome") == edificacao.get("edificacao_conjunta")
         
         if is_principal_ou_independente:
@@ -320,9 +317,7 @@ if mostrar_campos:
     # --- INÍCIO NOVO BLOCO: LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
     if len(todas_edificacoes) >= 1:
         
-        # O processamento só precisa acontecer se houver algo para processar (1 edificação é o mínimo)
-        
-        # 1. Definição de Tratamento: Só aparece se houver ANEXOS OU MAIS DE UMA TORRE
+        # 1. Definição de Tratamento (Aparece se houver ANEXOS OU MAIS DE UMA TORRE)
         if len(torres) > 1 or len(anexos) > 0:
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
             st.markdown("### 🔀 Definição de Tratamento por Edificação")
@@ -336,15 +331,16 @@ if mostrar_campos:
                     
                     is_torre = edificacao in torres
                     
-                    # Regra: Se é a ÚNICA torre, não precisa perguntar, é sempre Independente.
+                    # --- NOVO FLUXO CONDICIONAL ---
+                    # 1. Se é a ÚNICA torre, define como Independente e pula o radio button
                     if is_torre and len(torres) == 1:
                         edificacao['tratamento'] = "Independente"
                         edificacao['edificacao_conjunta'] = None
                         st.markdown(f"✅ Edificação **{edificacao['nome']}** (Torre Única) será tratada como **Independente**.")
                         continue
                     
-                    # Título da pergunta: Adapta a linguagem
-                    pergunta = "A edificação será tratada independente ou conjunta com outra?"
+                    # 2. Para anexos ou múltiplas torres, exibe o radio button
+                    pergunta = f"A edificação **{edificacao['nome']}** será tratada independente ou conjunta com outra?"
                     if not is_torre:
                         pergunta = f"O anexo **{edificacao['nome']}** será tratado independente ou será anexado como área de outra?"
                         
@@ -357,10 +353,12 @@ if mostrar_campos:
                     
                     if tratamento == "Conjunta":
                         if not nomes_torres:
+                            st.warning("⚠️ Necessário cadastrar uma torre para anexar a área.")
                             edificacao['edificacao_conjunta'] = None
                         else:
+                            # Pergunta ajustada para 'absorver'
                             edificacao['edificacao_conjunta'] = st.selectbox(
-                                f"Qual edificação inserir com **{edificacao['nome']}**?",
+                                f"Qual edificação **irá absorver** a área de **{edificacao['nome']}**?",
                                 options=nomes_torres,
                                 key=conjunta_key
                             )
@@ -391,7 +389,6 @@ if mostrar_campos:
             with col_init[1]:
                 edf2_nome = st.selectbox("Edificação 2:", [n for n in nomes_edificacoes_finais if n != edf1_nome], key="comparacao_edf2_main")
 
-            # Nota: Aqui, precisamos buscar os dados do edificação original para a fachada.
             edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1_nome), None)
             edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2_nome), None)
 
@@ -404,8 +401,6 @@ if mostrar_campos:
                 altura1 = st.number_input(f"Altura da fachada (Edificação 1)", min_value=0.0, key=f"altura_{edf1_data['nome']}", value=10.0)
                 area1 = largura1 * altura1
                 abertura1 = st.number_input(f"Área de abertura (Edificação 1)", min_value=0.0, key=f"abertura_{edf1_data['nome']}", value=2.0)
-                
-                # Omitindo lógica de cálculo completo para manter o foco na estrutura
                 
                 st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"N/A m")
                 st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"N/A m")
