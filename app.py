@@ -207,7 +207,11 @@ def add_comparison():
         'edf2_nome': None, 
         'largura1': 5.0, 
         'altura1': 10.0, 
-        'abertura1': 2.0
+        'abertura1': 2.0,
+        # NOVOS CAMPOS PARA EDIFICAÇÃO 2
+        'largura2': 5.0, 
+        'altura2': 10.0, 
+        'abertura2': 2.0
     })
     pass 
 
@@ -215,7 +219,6 @@ def remove_comparison(index):
     """Remove a comparação pelo índice."""
     if index < len(st.session_state.comparacoes_extra):
         st.session_state.comparacoes_extra.pop(index)
-        # CORREÇÃO FINAL: Retirado o st.experimental_rerun() daqui
     pass
 # --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
@@ -429,11 +432,11 @@ if mostrar_campos:
                 if not opcoes_edf:
                     break
                     
-                # 1. TRATAMENTO DE VALOR INICIAL PARA SELEÇÃO
+                # 1. TRATAMENTO DE VALOR INICIAL PARA SELEÇÃO (Edificação 1)
                 if comp['edf1_nome'] is None or comp['edf1_nome'] not in opcoes_edf:
                     comp['edf1_nome'] = opcoes_edf[0] if opcoes_edf else None
                     
-                # 2. TRATAMENTO DE VALOR INICIAL PARA EDIFICAÇÃO 2
+                # 2. TRATAMENTO DE VALOR INICIAL PARA SELEÇÃO (Edificação 2)
                 opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                 if not opcoes_edf2:
                      comp['edf2_nome'] = None
@@ -444,7 +447,7 @@ if mostrar_campos:
                 
                 col_init = st.columns(3)
                 
-                # Edificação 1
+                # Edificação 1 (Input)
                 with col_init[0]:
                     index_edf1 = opcoes_edf.index(comp['edf1_nome']) if comp['edf1_nome'] in opcoes_edf else 0
                     
@@ -455,14 +458,22 @@ if mostrar_campos:
                         index=index_edf1
                     )
                 
-                # Edificação 2
+                # Edificação 2 (Input)
                 with col_init[1]:
                     # Recalcula as opções após a seleção da Edificação 1
                     opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                     
-                    # Garantir que o índice seja 0 se houver opções, ou 0 se estiver vazia (para evitar crash)
-                    index_edf2 = opcoes_edf2.index(comp['edf2_nome']) if comp['edf2_nome'] in opcoes_edf2 else (0 if opcoes_edf2 else 0)
-                    
+                    # Se não há mais opções, garante que a seleção seja None
+                    if not opcoes_edf2:
+                        comp['edf2_nome'] = None
+                        index_edf2 = 0
+                    elif comp['edf2_nome'] not in opcoes_edf2:
+                        # Se o valor anterior sumiu, usa o primeiro disponível
+                         comp['edf2_nome'] = opcoes_edf2[0]
+                         index_edf2 = 0
+                    else:
+                         index_edf2 = opcoes_edf2.index(comp['edf2_nome'])
+
                     comp['edf2_nome'] = st.selectbox(
                         "Edificação 2:", 
                         opcoes_edf2, 
@@ -484,25 +495,38 @@ if mostrar_campos:
                 if edf1_data and edf2_data and edf1_data['nome'] != edf2_data['nome']:
                     acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
                     
+                    # --- INPUTS PARA EDIFICAÇÃO 1 ---
                     st.markdown(f"**Fachada a usar na comparação (Edificação 1 - {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
-                    
-                    col_calc = st.columns(4)
-                    with col_calc[0]:
+                    col_calc_1 = st.columns(4)
+                    with col_calc_1[0]:
                         comp['largura1'] = st.number_input(f"Largura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"largura1_{i}", value=comp.get('largura1', 5.0))
-                    with col_calc[1]:
+                    with col_calc_1[1]:
                         comp['altura1'] = st.number_input(f"Altura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"altura1_{i}", value=comp.get('altura1', 10.0))
-                    with col_calc[2]:
+                    with col_calc_1[2]:
                         area1 = comp['largura1'] * comp['altura1']
                         st.metric(label=f"Área Fachada {edf1_data['nome']} (m²)", value=f"{area1:.2f}")
-                    with col_calc[3]:
+                    with col_calc_1[3]:
                         comp['abertura1'] = st.number_input(f"Área Abertura {edf1_data['nome']} (m²)", min_value=0.0, step=0.1, key=f"abertura1_{i}", value=comp.get('abertura1', 2.0))
                     
                     st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"N/A m")
+                    
+                    # --- INPUTS PARA EDIFICAÇÃO 2 ---
+                    st.markdown(f"**Fachada a usar na comparação (Edificação 2 - {edf2_data['nome']}):** {fachada_edificacao(edf2_data)}")
+                    col_calc_2 = st.columns(4)
+                    with col_calc_2[0]:
+                        comp['largura2'] = st.number_input(f"Largura Fachada {edf2_data['nome']} (m)", min_value=0.0, step=0.1, key=f"largura2_{i}", value=comp.get('largura2', 5.0))
+                    with col_calc_2[1]:
+                        comp['altura2'] = st.number_input(f"Altura Fachada {edf2_data['nome']} (m)", min_value=0.0, step=0.1, key=f"altura2_{i}", value=comp.get('altura2', 10.0))
+                    with col_calc_2[2]:
+                        area2 = comp['largura2'] * comp['altura2']
+                        st.metric(label=f"Área Fachada {edf2_data['nome']} (m²)", value=f"{area2:.2f}")
+                    with col_calc_2[3]:
+                        comp['abertura2'] = st.number_input(f"Área Abertura {edf2_data['nome']} (m²)", min_value=0.0, step=0.1, key=f"abertura2_{i}", value=comp.get('abertura2', 2.0))
+                        
                     st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"N/A m")
                 
                 st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
                 
-            # --- COMENTÁRIO FIXO EM VERMELHO ADICIONADO AQUI ---
             st.markdown(
                 "<span style='color:red'>⚠️ Ao terminar as análises, volte e revise as considerações de **independência** de cada edificação/anexo.</span>", 
                 unsafe_allow_html=True
