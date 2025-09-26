@@ -141,7 +141,6 @@ def buscar_valor_tabela_simplificada(porcentagem, num_pavimentos):
 
     porcentagens_lookup = sorted(tabela[num_pavimentos_lookup].keys())
     
-    # Encontra a Porcentagem mais próxima (sem interpolação linear, apenas o ponto mais próximo)
     porcentagem_clamped = max(min(porcentagem, 100), 10) 
     porcentagem_mais_proxima = min(porcentagens_lookup, key=lambda p: abs(p - porcentagem_clamped))
     
@@ -150,7 +149,7 @@ def buscar_valor_tabela_simplificada(porcentagem, num_pavimentos):
 def buscar_valor_tabela(porcentagem, fator_x):
     """
     Calcula o Fator Alfa (α) usando Interpolação Linear Bidimensional.
-    O Fator Alfa é o valor da Tabela A.3 da NT-07.
+    (Fator Alfa é o valor da Tabela A.3 da NT-07)
     """
     tabela_data = {
         20: [0.4, 0.4, 0.44, 0.46, 0.48, 0.49, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51],
@@ -164,54 +163,45 @@ def buscar_valor_tabela(porcentagem, fator_x):
     y_values = sorted(tabela_data.keys()) # Eixo Y (Porcentagem de Abertura)
     x_values = [1.0, 1.3, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0, 32.0, 40.0] # Eixo X (Fator X)
 
-    # Função auxiliar para interpolação linear 1D (usada duas vezes para interpolação 2D)
     def linear_interpolate(x, x1, x2, y1, y2):
         if x2 == x1: return y1
         return y1 + (x - x1) * (y2 - y1) / (x2 - x1)
 
-    # 1. Interpolação no Eixo X (Fator X) para as linhas Y1 e Y2
-    
-    # Limita os valores de entrada para evitar erros de índice
-    porcentagem = max(min(porcentagem, 100), 20)
-    fator_x = max(min(fator_x, 40.0), 1.0)
+    # 1. ANCORAGEM/CLAMPING (Piso e Teto)
+    porcentagem = max(porcentagem, 20) # Garante o piso de 20%
+    fator_x = max(min(fator_x, 40.0), 1.0) # Limita X entre 1.0 e 40.0
 
-    # Encontra os valores X1 e X2 que englobam fator_x
+    # 2. LOCALIZAÇÃO DOS PONTOS DE INTERPOLAÇÃO
     idx1_x = max([i for i, x in enumerate(x_values) if x <= fator_x])
     idx2_x = min([i for i, x in enumerate(x_values) if x >= fator_x])
-    
     x1 = x_values[idx1_x]
     x2 = x_values[idx2_x]
 
-    # Encontra os valores Y1 e Y2 que englobam porcentagem
     idx1_y = max([i for i, y in enumerate(y_values) if y <= porcentagem])
     idx2_y = min([i for i, y in enumerate(y_values) if y >= porcentagem])
-    
     y1 = y_values[idx1_y]
     y2 = y_values[idx2_y]
 
-    # Se o valor cair diretamente numa linha (e.g., 40%)
+    # 3. INTERPOLAÇÃO
     if y1 == y2: 
-        # Apenas interpola 1D no eixo X (Fator X)
+        # Interpolação 1D no eixo X
         v_y1 = tabela_data[y1][idx1_x]
         v_y2 = tabela_data[y1][idx2_x]
-        return linear_interpolate(fator_x, x1, x2, v_y1, v_y2)
-    
-    # 2. Interpolação Bidimensional
-    
-    # Valores de alfa nos quatro cantos
-    a11 = tabela_data[y1][idx1_x] # (y1, x1)
-    a21 = tabela_data[y1][idx2_x] # (y1, x2)
-    a12 = tabela_data[y2][idx1_x] # (y2, x1)
-    a22 = tabela_data[y2][idx2_x] # (y2, x2)
+        final_alpha = linear_interpolate(fator_x, x1, x2, v_y1, v_y2)
+    else:
+        # Interpolação Bidimensional
+        a11 = tabela_data[y1][idx1_x] 
+        a21 = tabela_data[y1][idx2_x] 
+        a12 = tabela_data[y2][idx1_x] 
+        a22 = tabela_data[y2][idx2_x] 
 
-    # Interpolação 1D no eixo X (Fator X) para as duas linhas (y1 e y2)
-    alpha_y1 = linear_interpolate(fator_x, x1, x2, a11, a21)
-    alpha_y2 = linear_interpolate(fator_x, x1, x2, a12, a22)
+        alpha_y1 = linear_interpolate(fator_x, x1, x2, a11, a21)
+        alpha_y2 = linear_interpolate(fator_x, x1, x2, a12, a22)
 
-    # Interpolação final no eixo Y (Porcentagem) usando os valores intermediários
-    final_alpha = linear_interpolate(porcentagem, y1, y2, alpha_y1, alpha_y2)
+        final_alpha = linear_interpolate(porcentagem, y1, y2, alpha_y1, alpha_y2)
     
-    return final_alpha.item() if hasattr(final_alpha, 'item') else final_alpha # Garante que o retorno seja um float simples
+    return final_alpha.item() if hasattr(final_alpha, 'item') else final_alpha 
+
 
 def consolidar_edificacoes(edificacoes_atuais):
     edificacoes_consolidadas = []
@@ -457,7 +447,6 @@ if mostrar_campos:
     # --- FIM LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
     # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL)
-    # A exibição é baseada no número de edificações iniciais
     if len(todas_edificacoes) > 1:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
@@ -512,15 +501,12 @@ if mostrar_campos:
                 
                 # Edificação 2 (Input)
                 with col_init[1]:
-                    # Recalcula as opções após a seleção da Edificação 1
                     opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                     
-                    # Se não há mais opções, garante que a seleção seja None
                     if not opcoes_edf2:
                         comp['edf2_nome'] = None
                         index_edf2 = 0
                     elif comp['edf2_nome'] not in opcoes_edf2:
-                        # Se o valor anterior sumiu, usa o primeiro disponível
                          comp['edf2_nome'] = opcoes_edf2[0]
                          index_edf2 = 0
                     else:
@@ -652,8 +638,6 @@ if mostrar_campos:
                 st.markdown("### Notas Específicas")
                 for nota in notas:
                     st.markdown(f"- {nota}")
-            
-            st.markdown("### Detalhamento")
             
             # Detalhamento para "Acesso de Viatura"
             if "X" in resumo.get("Acesso de Viatura na Edificação", ""):
