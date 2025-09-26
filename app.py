@@ -132,26 +132,27 @@ def fachada_edificacao(edf):
 
 def buscar_valor_tabela_simplificada(porcentagem, num_pavimentos):
     # Lógica da Tabela Simplificada para Distância (Tabela A.4 NT-07)
-    # Valores de referência para 1 a 3 pavimentos (3+):
     tabela = {
         1: {10: 4, 20: 5, 30: 6, 40: 7, 50: 8, 70: 9, 100: 10},
         2: {10: 6, 20: 7, 30: 8, 40: 9, 50: 10, 70: 11, 100: 12},
         3: {10: 8, 20: 9, 30: 10, 40: 11, 50: 12, 70: 13, 100: 14}
     }
-    # Garante que pavimentos >= 3 use a linha 3
     num_pavimentos_lookup = min(num_pavimentos, 3) 
 
     porcentagens_lookup = sorted(tabela[num_pavimentos_lookup].keys())
     
     # Encontra a Porcentagem mais próxima (sem interpolação linear, apenas o ponto mais próximo)
-    porcentagem_clamped = max(min(porcentagem, 100), 10) # Limita entre 10% e 100%
+    porcentagem_clamped = max(min(porcentagem, 100), 10) 
     porcentagem_mais_proxima = min(porcentagens_lookup, key=lambda p: abs(p - porcentagem_clamped))
     
     return tabela[num_pavimentos_lookup][porcentagem_mais_proxima]
 
 def buscar_valor_tabela(porcentagem, fator_x):
-    # Tabela do Fator Alfa (Tabela A.3 NT-07)
-    tabela = {
+    """
+    Calcula o Fator Alfa (α) usando Interpolação Linear Bidimensional.
+    O Fator Alfa é o valor da Tabela A.3 da NT-07.
+    """
+    tabela_data = {
         20: [0.4, 0.4, 0.44, 0.46, 0.48, 0.49, 0.5, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51, 0.51],
         30: [0.6, 0.66, 0.73, 0.79, 0.84, 0.88, 0.9, 0.92, 0.93, 0.94, 0.94, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
         40: [0.8, 0.8, 0.94, 1.02, 1.1, 1.17, 1.23, 1.27, 1.3, 1.32, 1.33, 1.33, 1.34, 1.34, 1.34, 1.34, 1.34, 1.34],
@@ -160,13 +161,57 @@ def buscar_valor_tabela(porcentagem, fator_x):
         80: [1.2, 1.37, 1.52, 1.68, 1.85, 2.02, 2.18, 2.34, 2.48, 2.59, 2.67, 2.73, 2.77, 2.79, 2.8, 2.81, 2.81],
         100: [1.4, 1.56, 1.74, 1.93, 2.13, 2.34, 2.55, 2.76, 2.95, 3.12, 3.26, 3.36, 3.43, 3.48, 3.51, 3.52, 3.53]
     }
-    valores_x = [1.0, 1.3, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0, 32.0, 40.0]
+    y_values = sorted(tabela_data.keys()) # Eixo Y (Porcentagem de Abertura)
+    x_values = [1.0, 1.3, 1.6, 2.0, 2.5, 3.2, 4.0, 5.0, 6.0, 8.0, 10.0, 13.0, 16.0, 20.0, 25.0, 32.0, 40.0] # Eixo X (Fator X)
+
+    # Função auxiliar para interpolação linear 1D (usada duas vezes para interpolação 2D)
+    def linear_interpolate(x, x1, x2, y1, y2):
+        if x2 == x1: return y1
+        return y1 + (x - x1) * (y2 - y1) / (x2 - x1)
+
+    # 1. Interpolação no Eixo X (Fator X) para as linhas Y1 e Y2
     
-    # Encontra a Porcentagem e o Fator X mais próximos (aproximação discreta)
-    porcentagem_mais_proxima = min(tabela.keys(), key=lambda p: abs(p - porcentagem))
-    indice_x = min(range(len(valores_x)), key=lambda i: abs(valores_x[i] - fator_x))
+    # Limita os valores de entrada para evitar erros de índice
+    porcentagem = max(min(porcentagem, 100), 20)
+    fator_x = max(min(fator_x, 40.0), 1.0)
+
+    # Encontra os valores X1 e X2 que englobam fator_x
+    idx1_x = max([i for i, x in enumerate(x_values) if x <= fator_x])
+    idx2_x = min([i for i, x in enumerate(x_values) if x >= fator_x])
     
-    return tabela[porcentagem_mais_proxima][indice_x]
+    x1 = x_values[idx1_x]
+    x2 = x_values[idx2_x]
+
+    # Encontra os valores Y1 e Y2 que englobam porcentagem
+    idx1_y = max([i for i, y in enumerate(y_values) if y <= porcentagem])
+    idx2_y = min([i for i, y in enumerate(y_values) if y >= porcentagem])
+    
+    y1 = y_values[idx1_y]
+    y2 = y_values[idx2_y]
+
+    # Se o valor cair diretamente numa linha (e.g., 40%)
+    if y1 == y2: 
+        # Apenas interpola 1D no eixo X (Fator X)
+        v_y1 = tabela_data[y1][idx1_x]
+        v_y2 = tabela_data[y1][idx2_x]
+        return linear_interpolate(fator_x, x1, x2, v_y1, v_y2)
+    
+    # 2. Interpolação Bidimensional
+    
+    # Valores de alfa nos quatro cantos
+    a11 = tabela_data[y1][idx1_x] # (y1, x1)
+    a21 = tabela_data[y1][idx2_x] # (y1, x2)
+    a12 = tabela_data[y2][idx1_x] # (y2, x1)
+    a22 = tabela_data[y2][idx2_x] # (y2, x2)
+
+    # Interpolação 1D no eixo X (Fator X) para as duas linhas (y1 e y2)
+    alpha_y1 = linear_interpolate(fator_x, x1, x2, a11, a21)
+    alpha_y2 = linear_interpolate(fator_x, x1, x2, a12, a22)
+
+    # Interpolação final no eixo Y (Porcentagem) usando os valores intermediários
+    final_alpha = linear_interpolate(porcentagem, y1, y2, alpha_y1, alpha_y2)
+    
+    return final_alpha.item() if hasattr(final_alpha, 'item') else final_alpha # Garante que o retorno seja um float simples
 
 def consolidar_edificacoes(edificacoes_atuais):
     edificacoes_consolidadas = []
@@ -215,7 +260,7 @@ def add_comparison():
         'edf2_nome': None, 
         'largura1': 10.00, 
         'altura1': 2.70, 
-        'abertura1': 3.36, # Valores default que replicam o cenário de teste
+        'abertura1': 3.36, 
         'largura2': 5.0, 
         'altura2': 10.0, 
         'abertura2': 2.0
@@ -412,6 +457,7 @@ if mostrar_campos:
     # --- FIM LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
     # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL)
+    # A exibição é baseada no número de edificações iniciais
     if len(todas_edificacoes) > 1:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
@@ -442,7 +488,7 @@ if mostrar_campos:
                 if comp['edf1_nome'] is None or comp['edf1_nome'] not in opcoes_edf:
                     comp['edf1_nome'] = opcoes_edf[0] if opcoes_edf else None
                     
-                # 2. TRATAMENTO DE VALOR INICIAL PARA SELEÇÃO (Edificação 2)
+                # 2. TRATAMENTO DE VALOR INICIAL PARA EDIFICAÇÃO 2
                 opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                 if not opcoes_edf2:
                      comp['edf2_nome'] = None
@@ -502,7 +548,6 @@ if mostrar_campos:
                     acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
                     
                     # --- CÁLCULOS PARA EDIFICAÇÃO 1 ---
-                    # Calcula o Fator X e Porcentagem de Abertura para Edificação 1
                     largura1 = comp.get('largura1', 0.0)
                     altura1 = comp.get('altura1', 0.0)
                     area1 = largura1 * altura1
@@ -514,7 +559,6 @@ if mostrar_campos:
                     menor_dim1 = min(largura1, altura1)
                     distancia_calculada_1 = (valor_tabela1 * menor_dim1) + acrescimo
                     
-                    # Aplica regra de min(Distância Calculada, Distância Simplificada)
                     if edf1_data.get('area', 0.0) <= 750 and edf1_data.get('altura', 0.0) <= 12:
                         distancia_tabela_simplificada1 = buscar_valor_tabela_simplificada(porcentagem1, edf1_data.get('num_pavimentos', 1))
                         distancia_final_1 = min(distancia_calculada_1, distancia_tabela_simplificada1)
@@ -538,7 +582,6 @@ if mostrar_campos:
                     
                     
                     # --- CÁLCULOS PARA EDIFICAÇÃO 2 ---
-                    # Calcula o Fator X e Porcentagem de Abertura para Edificação 2
                     largura2 = comp.get('largura2', 0.0)
                     altura2 = comp.get('altura2', 0.0)
                     area2 = largura2 * altura2
@@ -550,7 +593,6 @@ if mostrar_campos:
                     menor_dim2 = min(largura2, altura2)
                     distancia_calculada_2 = (valor_tabela2 * menor_dim2) + acrescimo
                     
-                    # Aplica regra de min(Distância Calculada, Distância Simplificada)
                     if edf2_data.get('area', 0.0) <= 750 and edf2_data.get('altura', 0.0) <= 12:
                         distancia_tabela_simplificada2 = buscar_valor_tabela_simplificada(porcentagem2, edf2_data.get('num_pavimentos', 1))
                         distancia_final_2 = min(distancia_calculada_2, distancia_tabela_simplificada2)
