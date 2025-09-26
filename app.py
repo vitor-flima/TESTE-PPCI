@@ -13,7 +13,7 @@ st.title("📁 Ferramenta de Projetos PPCI")
 if 'comparisons' not in st.session_state:
     st.session_state.comparisons = []
 if 'comparacoes_extra' not in st.session_state:
-    st.session_state.comparacoes_extra = []
+    st.session_state.comparacoes_extra = [] # Lista para gerenciar as comparações dinâmicas
 if 'bombeiros' not in st.session_state:
     st.session_state.bombeiros = "Sim"
 if 'edificacoes_finais' not in st.session_state:
@@ -118,7 +118,7 @@ def fachada_edificacao(edf):
         return "toda a fachada do pavimento"
     elif "terrea" in edf and edf["terrea"] == "Sim":
         return "toda a fachada do edifício"
-    elif "altura" in edf and edf["area"] in edf:
+    elif "altura" in edf and "area" in edf:
         if edf["area"] <= 750 and edf["altura"] < 12:
             return "toda a área da fachada"
         elif edf["area"] > 750 and edf["altura"] < 12:
@@ -194,6 +194,26 @@ def consolidar_edificacoes(edificacoes_atuais):
             nomes_ja_consolidados.add(edificacao["nome"])
         
     return edificacoes_consolidadas
+
+
+# --- FUNÇÕES PARA GESTÃO DE COMPARAÇÕES DE ISOLAMENTO DE RISCO ---
+def add_comparison():
+    """Adiciona uma nova comparação à lista no session_state."""
+    # Valores iniciais razoáveis para os inputs
+    st.session_state.comparacoes_extra.append({
+        'edf1_nome': None, 
+        'edf2_nome': None, 
+        'largura1': 5.0, 
+        'altura1': 10.0, 
+        'abertura1': 2.0
+    })
+
+def remove_comparison(index):
+    """Remove a comparação pelo índice e força um rerun para atualizar a UI."""
+    if index < len(st.session_state.comparacoes_extra):
+        st.session_state.comparacoes_extra.pop(index)
+        st.experimental_rerun()
+# --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
 
 # 🧭 Interface principal
@@ -331,7 +351,7 @@ if mostrar_campos:
                     
                     is_torre = edificacao in torres
                     
-                    # --- NOVO FLUXO CONDICIONAL ---
+                    # --- FLUXO CONDICIONAL ---
                     # 1. Se é a ÚNICA torre, define como Independente e pula o radio button
                     if is_torre and len(torres) == 1:
                         edificacao['tratamento'] = "Independente"
@@ -383,32 +403,77 @@ if mostrar_campos:
             
             st.radio("Há corpo de bombeiros com viatura de combate a incêndio na cidade?", ["Sim", "Não"], key="bombeiros")
 
-            col_init = st.columns(2)
-            with col_init[0]:
-                edf1_nome = st.selectbox("Edificação 1:", nomes_edificacoes_finais, key="comparacao_edf1_main")
-            with col_init[1]:
-                edf2_nome = st.selectbox("Edificação 2:", [n for n in nomes_edificacoes_finais if n != edf1_nome], key="comparacao_edf2_main")
+            # --- GESTÃO DINÂMICA DE COMPARAÇÕES RESTAURADA ---
+            if st.button("➕ Adicionar Comparação de Isolamento de Risco"):
+                add_comparison()
+                # O rerun é necessário se a lista for vazia e for a primeira adição
+                if len(st.session_state.comparacoes_extra) == 1:
+                    st.experimental_rerun() 
 
-            edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1_nome), None)
-            edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2_nome), None)
+            # Loop sobre as comparações dinâmicas
+            for i, comp in enumerate(st.session_state.comparacoes_extra):
+                st.markdown(f"#### Comparação {i+1}: Risco entre {comp['edf1_nome'] or '...'} e {comp['edf2_nome'] or '...'}")
+                
+                col_init = st.columns(3)
+                
+                # Edificação 1
+                with col_init[0]:
+                    # Tenta pré-selecionar o valor salvo ou usa o primeiro da lista
+                    index_edf1 = nomes_edificacoes_finais.index(comp['edf1_nome']) if comp['edf1_nome'] in nomes_edificacoes_finais else (0 if nomes_edificacoes_finais else 0)
+                    
+                    comp['edf1_nome'] = st.selectbox(
+                        "Edificação 1:", 
+                        nomes_edificacoes_finais, 
+                        key=f"comparacao_edf1_{i}",
+                        index=index_edf1
+                    )
+                
+                # Edificação 2
+                with col_init[1]:
+                    opcoes_edf2 = [n for n in nomes_edificacoes_finais if n != comp['edf1_nome']]
+                    index_edf2 = opcoes_edf2.index(comp['edf2_nome']) if comp['edf2_nome'] in opcoes_edf2 else (0 if opcoes_edf2 else 0)
+                    
+                    comp['edf2_nome'] = st.selectbox(
+                        "Edificação 2:", 
+                        opcoes_edf2, 
+                        key=f"comparacao_edf2_{i}",
+                        index=index_edf2
+                    )
 
-            if edf1_data and edf2_data:
-                acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
-                
-                # Lógica de cálculo de isolamento de risco (omissão para brevidade)
-                st.markdown(f"**Fachada a usar na comparação (Edificação 1 - {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
-                largura1 = st.number_input(f"Largura da fachada (Edificação 1)", min_value=0.0, key=f"largura_{edf1_data['nome']}", value=5.0)
-                altura1 = st.number_input(f"Altura da fachada (Edificação 1)", min_value=0.0, key=f"altura_{edf1_data['nome']}", value=10.0)
-                area1 = largura1 * altura1
-                abertura1 = st.number_input(f"Área de abertura (Edificação 1)", min_value=0.0, key=f"abertura_{edf1_data['nome']}", value=2.0)
-                
-                st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"N/A m")
-                st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"N/A m")
+                # Botão de Remover
+                with col_init[2]:
+                    # Adiciona um espaço para alinhar o botão de remover
+                    st.write("") 
+                    if st.button(f"➖ Remover", key=f"remove_comp_{i}", on_click=remove_comparison, args=(i,)):
+                        pass # A remoção é tratada pelo on_click e o rerun
+
+                edf1_data = next((e for e in todas_edificacoes if e["nome"] == comp['edf1_nome']), None)
+                edf2_data = next((e for e in todas_edificacoes if e["nome"] == comp['edf2_nome']), None)
+
+                if edf1_data and edf2_data:
+                    acrescimo = 1.5 if st.session_state.bombeiros == "Sim" else 3.0
+                    
+                    st.markdown(f"**Fachada a usar na comparação (Edificação 1 - {edf1_data['nome']}):** {fachada_edificacao(edf1_data)}")
+                    
+                    col_calc = st.columns(4)
+                    with col_calc[0]:
+                        comp['largura1'] = st.number_input(f"Largura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"largura1_{i}", value=comp.get('largura1', 5.0))
+                    with col_calc[1]:
+                        comp['altura1'] = st.number_input(f"Altura Fachada {edf1_data['nome']} (m)", min_value=0.0, step=0.1, key=f"altura1_{i}", value=comp.get('altura1', 10.0))
+                    with col_calc[2]:
+                        area1 = comp['largura1'] * comp['altura1']
+                        st.metric(label=f"Área Fachada {edf1_data['nome']} (m²)", value=f"{area1:.2f}")
+                    with col_calc[3]:
+                        comp['abertura1'] = st.number_input(f"Área Abertura {edf1_data['nome']} (m²)", min_value=0.0, step=0.1, key=f"abertura1_{i}", value=comp.get('abertura1', 2.0))
+                    
+                    st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"N/A m")
+                    st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"N/A m")
                 
                 st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
-                st.markdown("### 📝 Comentários sobre Isolamento de Risco")
-                st.text_area("Observações sobre distanciamento e isolamento de risco.", key="comentario_isolamento_geral")
-
+                
+            st.markdown("### 📝 Comentários sobre Isolamento de Risco")
+            st.text_area("Observações sobre distanciamento e isolamento de risco.", key="comentario_isolamento_geral")
+            # --- FIM GESTÃO DINÂMICA DE COMPARAÇÕES ---
     
     # 🧯 Tabela resumo de medidas de segurança e Detalhamento por medida de segurança
     if st.session_state.processamento_concluido:
