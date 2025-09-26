@@ -215,7 +215,6 @@ def remove_comparison(index):
     """Remove a comparação pelo índice."""
     if index < len(st.session_state.comparacoes_extra):
         st.session_state.comparacoes_extra.pop(index)
-        # CORREÇÃO FINAL: Removido o st.experimental_rerun() para estabilizar a remoção.
     pass
 # --- FIM FUNÇÕES GESTÃO DE COMPARAÇÕES ---
 
@@ -419,6 +418,7 @@ if mostrar_campos:
             if st.button("➕ Adicionar Comparação de Isolamento de Risco", on_click=add_comparison):
                 pass 
             
+            # Condição para só exibir o loop se houver pelo menos 2 projetos finais para comparar
             if len(nomes_edificacoes_finais) < 2:
                 st.warning("É necessário que hajam pelo menos duas edificações ou grupos consolidados (Independentes) para fazer uma comparação de isolamento de risco.")
             
@@ -427,18 +427,14 @@ if mostrar_campos:
                 
                 opcoes_edf = nomes_edificacoes_finais
                 
-                # Tratamento de índices para evitar erros de seleção inicial
                 if not opcoes_edf:
                     break
                     
-                # Definir valor inicial seguro para edf1_nome e edf2_nome
+                # 1. TRATAMENTO DE VALOR INICIAL PARA SELEÇÃO
+                # Garante que o valor inicial seja seguro
                 if comp['edf1_nome'] is None or comp['edf1_nome'] not in opcoes_edf:
                     comp['edf1_nome'] = opcoes_edf[0] if opcoes_edf else None
                     
-                # Se houver apenas uma opção, garante que edf2 seja None para a mensagem "No options to select"
-                if len(opcoes_edf) == 1:
-                     comp['edf2_nome'] = None
-                
                 st.markdown(f"#### Comparação {i+1}: Risco entre {comp.get('edf1_nome', '...')} e {comp.get('edf2_nome', '...')}")
                 
                 col_init = st.columns(3)
@@ -458,12 +454,18 @@ if mostrar_campos:
                 with col_init[1]:
                     opcoes_edf2 = [n for n in opcoes_edf if n != comp['edf1_nome']]
                     
-                    # Ajusta o valor salvo se ele não estiver mais nas opções (e.g., após a remoção de uma edificação)
-                    if comp['edf2_nome'] not in opcoes_edf2:
-                        comp['edf2_nome'] = opcoes_edf2[0] if opcoes_edf2 else None
+                    # 2. TRATAMENTO DE VALOR INICIAL PARA EDIFICAÇÃO 2
+                    # Se não houver opções (após a Edificação 1 ser selecionada), garante que o valor seja None
+                    if not opcoes_edf2:
+                         comp['edf2_nome'] = None
+                         index_edf2 = 0
+                    elif comp['edf2_nome'] not in opcoes_edf2:
+                         # Se o valor anterior sumiu, usa o primeiro disponível
+                         comp['edf2_nome'] = opcoes_edf2[0]
+                         index_edf2 = 0
+                    else:
+                         index_edf2 = opcoes_edf2.index(comp['edf2_nome'])
 
-                    index_edf2 = opcoes_edf2.index(comp['edf2_nome']) if comp['edf2_nome'] in opcoes_edf2 else (0 if opcoes_edf2 else 0)
-                    
                     comp['edf2_nome'] = st.selectbox(
                         "Edificação 2:", 
                         opcoes_edf2, 
