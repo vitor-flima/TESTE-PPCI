@@ -213,9 +213,8 @@ if modo == "📄 Revisar projeto existente":
         try:
             df = pd.read_excel(arquivo)
             st.success("Planilha carregada com sucesso!")
-            # Lógica para carregar projetos existentes
             if not df.empty:
-                st.session_state.processamento_concluido = True # Força a conclusão se dados forem carregados
+                st.session_state.processamento_concluido = True 
             mostrar_campos = True
         except Exception as e:
             st.error(f"Erro ao ler a planilha: {e}")
@@ -280,7 +279,7 @@ if mostrar_campos:
                 else:
                     parte_inferior = "cota de piso do pavimento mais baixo, exceto subsolos"
                 st.markdown(f"💡 Altura da edificação {i+1} é: **{parte_superior} - {parte_inferior}**")
-                altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}", value=8.0) # Valor padrão para H <= 12m
+                altura = st.number_input(f"Informe a altura da edificação {i+1} (m)", min_value=0.0, step=0.1, key=f"altura_torre_{i}", value=8.0)
             
             torres.append({
                 "nome": nome, "area": area, "altura": altura, "terrea": terrea,
@@ -318,8 +317,13 @@ if mostrar_campos:
     # --- INÍCIO NOVO BLOCO: LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
     if len(todas_edificacoes) >= 1:
         
-        # 1. Definição de Tratamento (Só aparece se houver mais de uma edificação)
-        if len(todas_edificacoes) > 1:
+        # Se houver apenas 1 edificação, pula a definição de tratamento e consolida a área original.
+        if len(todas_edificacoes) == 1:
+            st.session_state.edificacoes_finais = todas_edificacoes
+            st.session_state.processamento_concluido = True
+        
+        # Se houver mais de 1 edificação, exibe a seção de tratamento e consolida as áreas.
+        else:
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
             st.markdown("### 🔀 Definição de Tratamento por Edificação")
             
@@ -330,6 +334,7 @@ if mostrar_campos:
                     tratamento_key = f"tratamento_{edificacao['nome']}_{i}"
                     conjunta_key = f"conjunta_com_{edificacao['nome']}_{i}"
                     
+                    # Permite a decisão para TODAS as edificações (Torres e Anexos)
                     tratamento = st.radio(
                         f"A edificação **{edificacao['nome']}** será tratada independente ou conjunta com outra?",
                         ["Independente", "Conjunta"],
@@ -348,25 +353,18 @@ if mostrar_campos:
                             )
                     else:
                         edificacao['edificacao_conjunta'] = None
-        else:
-            # Caso haja apenas 1 edificação, o tratamento é IMPLÍCITO (Independente)
-            # Definimos o tratamento para a única edificação para garantir que a consolidação funcione
-            if todas_edificacoes:
-                todas_edificacoes[0]['tratamento'] = "Independente"
-                todas_edificacoes[0]['edificacao_conjunta'] = None
-        
-        # 2. Consolidação da Área (Executada após a Definição de Tratamento ou Implícita)
-        edificacoes_consolidadas = consolidar_edificacoes(todas_edificacoes)
-        
-        # Armazena a lista consolidada no estado de sessão para o restante do app
-        st.session_state.edificacoes_finais = edificacoes_consolidadas
-        st.session_state.processamento_concluido = True 
+            
+            # Consolidação após todas as decisões de agrupamento
+            edificacoes_consolidadas = consolidar_edificacoes(todas_edificacoes)
+            st.session_state.edificacoes_finais = edificacoes_consolidadas
+            st.session_state.processamento_concluido = True 
     # --- FIM NOVO BLOCO: LÓGICA DE DECISÃO E CONSOLIDAÇÃO ---
 
     # 🔀 Bloco de Isolamento entre Edificações (OPCIONAL, só aparece se houver mais de 1 edificação)
     if len(todas_edificacoes) > 1:
         if st.checkbox("Deseja rodar a análise detalhada de Isolamento de Risco (Fachada/Abertura)?", key='check_isolamento'):
             
+            # ... (Restante da lógica de Isolamento de Risco (Fachada) )
             nomes_edificacoes_finais = [e["nome"] for e in st.session_state.edificacoes_finais if e["nome"]]
             st.markdown("<div style='border-top: 6px solid #555; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
             st.markdown("### 🔀 Isolamento entre Edificações (Análise de Fachada)")
@@ -379,6 +377,7 @@ if mostrar_campos:
             with col_init[1]:
                 edf2_nome = st.selectbox("Edificação 2:", [n for n in nomes_edificacoes_finais if n != edf1_nome], key="comparacao_edf2_main")
 
+            # Nota: Aqui, precisamos buscar os dados do edificação original para a fachada.
             edf1_data = next((e for e in todas_edificacoes if e["nome"] == edf1_nome), None)
             edf2_data = next((e for e in todas_edificacoes if e["nome"] == edf2_nome), None)
 
@@ -391,14 +390,15 @@ if mostrar_campos:
                 altura1 = st.number_input(f"Altura da fachada (Edificação 1)", min_value=0.0, key=f"altura_{edf1_data['nome']}", value=10.0)
                 area1 = largura1 * altura1
                 abertura1 = st.number_input(f"Área de abertura (Edificação 1)", min_value=0.0, key=f"abertura_{edf1_data['nome']}", value=2.0)
-                # ... (restante da lógica de cálculo e exibição de métricas) ...
+                
+                # Omitindo lógica de cálculo completo para manter o foco na estrutura
+                
                 st.metric(label=f"Distância de isolamento (Edificação 1)", value=f"N/A m")
                 st.metric(label=f"Distância de isolamento (Edificação 2)", value=f"N/A m")
                 
                 st.markdown("<div style='border-top: 2px solid #ddd; margin-top: 20px; margin-bottom: 20px'></div>", unsafe_allow_html=True)
                 st.markdown("### 📝 Comentários sobre Isolamento de Risco")
                 st.text_area("Observações sobre distanciamento e isolamento de risco.", key="comentario_isolamento_geral")
-
     
     # 🧯 Tabela resumo de medidas de segurança e Detalhamento por medida de segurança
     if st.session_state.processamento_concluido:
@@ -507,7 +507,6 @@ if mostrar_campos:
                         elif "³" in aplicacao: st.markdown("📌 Observação especial: ver nota 3")
                         elif "⁴" in aplicacao: st.markdown("📌 Observação especial: ver nota 4")
     else:
-        # Mensagem que aparece se não houver edificações
         st.warning("Cadastre as edificações para ver as medidas de segurança aplicáveis.")
 
 
@@ -531,4 +530,8 @@ if mostrar_campos:
             key="download_button_planilha_final"
         )
     else:
-        st.warning("Defina o agrupamento das edificações para liberar a exportação.")
+        # Se houver dados, mas o processamento ainda não foi concluído (i.e., não foi definido o agrupamento)
+        if len(todas_edificacoes) > 0 and not st.session_state.processamento_concluido:
+            st.warning("Defina o agrupamento das edificações para liberar a exportação.")
+        elif not todas_edificacoes:
+            st.warning("Cadastre as edificações para exportar.")
